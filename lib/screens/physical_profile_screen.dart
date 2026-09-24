@@ -1,60 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:fitstart_mobile_app/services/auth_service.dart';
-import 'package:fitstart_mobile_app/screens/login_screen.dart';
-import 'package:fitstart_mobile_app/screens/role_selection_screen.dart';
+import 'package:fitstart_mobile_app/screens/home_screen.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class PhysicalProfileScreen extends StatefulWidget {
+  const PhysicalProfileScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<PhysicalProfileScreen> createState() => _PhysicalProfileScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _authService = AuthService();
-  
-  bool _isLoading = false;
-  bool _obscurePassword = true;
+  final _heightController = TextEditingController();
+  final _weightController = TextEditingController();
+  final _ageController = TextEditingController();
 
-  void _register() async {
+  void _completeProfile() {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      
-      final user = await _authService.registerWithEmailAndPassword(
-        _nameController.text.trim(),
-        _emailController.text.trim(),
-        _passwordController.text,
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
       );
-      
-      setState(() => _isLoading = false);
-
-      if (user != null && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
-        );
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Registration failed. Please try again.'),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
     }
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 
@@ -78,7 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Create Account',
+                    'Physical Profile',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 32,
@@ -89,7 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Start your fitness journey today',
+                    'Help us personalize your AI workout plan.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -98,12 +71,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 48),
                   
-                  // Name Field
+                  // Height Field
                   TextFormField(
-                    controller: _nameController,
+                    controller: _heightController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      labelText: 'Full Name',
+                      labelText: 'Height (cm)',
                       labelStyle: TextStyle(color: Colors.grey.shade500),
                       filled: true,
                       fillColor: const Color(0xFF1E1E1E),
@@ -111,26 +85,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
-                      prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF00E676)),
+                      prefixIcon: const Icon(Icons.height_rounded, color: Color(0xFF00E676)),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(color: Color(0xFF00E676), width: 2),
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Please enter your name';
+                      if (value == null || value.isEmpty) return 'Required';
+                      if (double.tryParse(value) == null) return 'Invalid number';
                       return null;
                     },
                   ),
                   const SizedBox(height: 20),
                   
-                  // Email Field
+                  // Weight Field
                   TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
+                    controller: _weightController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      labelText: 'Email',
+                      labelText: 'Weight (kg)',
                       labelStyle: TextStyle(color: Colors.grey.shade500),
                       filled: true,
                       fillColor: const Color(0xFF1E1E1E),
@@ -138,27 +113,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
-                      prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF00E676)),
+                      prefixIcon: const Icon(Icons.monitor_weight_rounded, color: Color(0xFF00E676)),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(color: Color(0xFF00E676), width: 2),
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Please enter your email';
-                      if (!value.contains('@')) return 'Please enter a valid email';
+                      if (value == null || value.isEmpty) return 'Required';
+                      if (double.tryParse(value) == null) return 'Invalid number';
                       return null;
                     },
                   ),
                   const SizedBox(height: 20),
                   
-                  // Password Field
+                  // Age Field
                   TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
+                    controller: _ageController,
+                    keyboardType: TextInputType.number,
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: 'Age',
                       labelStyle: TextStyle(color: Colors.grey.shade500),
                       filled: true,
                       fillColor: const Color(0xFF1E1E1E),
@@ -166,28 +141,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
-                      prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF00E676)),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          color: Colors.grey.shade500,
-                        ),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                      ),
+                      prefixIcon: const Icon(Icons.cake_rounded, color: Color(0xFF00E676)),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: const BorderSide(color: Color(0xFF00E676), width: 2),
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Please enter a password';
-                      if (value.length < 6) return 'Password must be at least 6 characters';
+                      if (value == null || value.isEmpty) return 'Required';
+                      if (int.tryParse(value) == null) return 'Invalid number';
                       return null;
                     },
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 48),
                   
-                  // Register Button
+                  // Continue Button
                   Container(
                     height: 56,
                     decoration: BoxDecoration(
@@ -201,7 +169,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _register,
+                      onPressed: _completeProfile,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF00E676),
                         shape: RoundedRectangleBorder(
@@ -209,46 +177,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: _isLoading 
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(color: Colors.black87, strokeWidth: 3),
-                          )
-                        : const Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Navigate to Login
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Already have an account? ', style: TextStyle(color: Colors.grey.shade400)),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginScreen()),
-                          );
-                        },
-                        child: const Text(
-                          'Sign In',
-                          style: TextStyle(
-                            color: Color(0xFF00E676),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                      child: const Text(
+                        'Finish Setup',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
