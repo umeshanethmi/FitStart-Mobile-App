@@ -10,7 +10,7 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF2563EB),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
