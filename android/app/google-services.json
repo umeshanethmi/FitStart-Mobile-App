@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "18758494878",
+    "project_id": "fitstart-dc5bd",
+    "storage_bucket": "fitstart-dc5bd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:18758494878:android:d49fd467faf3eb9afe298f",
+        "android_client_info": {
+          "package_name": "com.fitstart.fitstart_mobile_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjWu8ditP-NzRikuKdHcEl7xqGL1qvRdk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
