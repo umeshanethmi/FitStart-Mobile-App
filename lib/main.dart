@@ -14,7 +14,11 @@ class MyApp extends StatelessWidget {
       title: 'FitStart',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2563EB), // The primary blue color
+          primary: const Color(0xFF2563EB),
+        ),
+        primaryColor: const Color(0xFF2563EB),
         useMaterial3: true,
       ),
       home: const WelcomeScreen(),
