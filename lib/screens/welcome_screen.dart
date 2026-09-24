@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:fitstart_mobile_app/screens/register_screen.dart';
+import 'package:fitstart_mobile_app/screens/login_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -45,7 +47,12 @@ class WelcomeScreen extends StatelessWidget {
               // Get Started Button
               ElevatedButton(
                 onPressed: () {
-                  // TODO: Navigate to Login/Signup
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RegisterScreen(),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
@@ -57,6 +64,30 @@ class WelcomeScreen extends StatelessWidget {
                 child: const Text(
                   'Get Started',
                   style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Log In Button
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.green,
+                  side: const BorderSide(color: Colors.green),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Log In',
+                  style: TextStyle(fontSize: 18),
                 ),
               ),
             ],
