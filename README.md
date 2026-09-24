@@ -9,16 +9,7 @@ FitStart is a mobile application designed specifically for fitness beginners to 
 ## 📱 Project Overview
 * **Project Name:** FitStart
 * **Domain:** Health & Fitness / Mobile Application
-* **Module:** IT3060 - HCI (Milestone 02: High-Fidelity Prototyping & User Testing)
-
----
-
-## 🛠️ Tech Stack & Architecture
-Based on our project requirements and technical analysis:
-* **Frontend:** Flutter (Cross-platform UI development with smooth animations)
-* **Backend:** Node.js & Express (Scalable API gateway)
-* **Database:** Firebase Firestore / PostgreSQL (Reliable structured storage for user profiles and health metrics)
-* **Authentication:** Firebase Auth (Secure and fast user authentication)
+* **Module:** IT3060 - HCI 
 
 ---
 
