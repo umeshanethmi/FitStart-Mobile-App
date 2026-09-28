@@ -1,45 +1,62 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitstart_mobile_app/models/user_model.dart';
 
 class AuthService {
-  // A simple mockup state to simulate an active user session.
-  UserModel? _currentUser;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  UserModel? get currentUser => _currentUser;
+  UserModel? _userFromFirebaseUser(User? user, {String name = ""}) {
+    return user != null
+        ? UserModel(id: user.uid, name: name.isNotEmpty ? name : user.displayName ?? "User", email: user.email ?? "")
+        : null;
+  }
 
-  // Mock register function
+  UserModel? get currentUser {
+    return _userFromFirebaseUser(_auth.currentUser);
+  }
+
+  // Register function using Firebase
   Future<UserModel?> registerWithEmailAndPassword(String name, String email, String password) async {
-    // In a real app, you would integrate Firebase or your own backend here.
-    // For now, simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // Create a mock user
-    _currentUser = UserModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(), 
-      name: name, 
-      email: email
-    );
-    
-    return _currentUser;
+    try {
+      UserCredential result = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      User? user = result.user;
+      
+      // Update the display name
+      if (user != null) {
+        await user.updateDisplayName(name);
+        await user.reload();
+      }
+      
+      return _userFromFirebaseUser(user, name: name);
+    } catch (e) {
+      print("Error in registerWithEmailAndPassword: $e");
+      rethrow;
+    }
   }
 
-  // Mock login function
+  // Login function using Firebase
   Future<UserModel?> signInWithEmailAndPassword(String email, String password) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
-    
-    // Allow any email/password combo for mock purposes
-    _currentUser = UserModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(), 
-      name: "Mock User", 
-      email: email
-    );
-    
-    return _currentUser;
+    try {
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      User? user = result.user;
+      return _userFromFirebaseUser(user);
+    } catch (e) {
+      print("Error in signInWithEmailAndPassword: $e");
+      rethrow;
+    }
   }
 
-  // Mock sign out
+  // Sign out using Firebase
   Future<void> signOut() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    _currentUser = null;
+    try {
+      await _auth.signOut();
+    } catch (e) {
+      print("Error in signOut: $e");
+    }
   }
 }

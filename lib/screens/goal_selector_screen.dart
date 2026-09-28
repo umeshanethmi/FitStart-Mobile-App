@@ -15,7 +15,7 @@ class _GoalSelectorScreenState extends State<GoalSelectorScreen> {
     if (_selectedGoal != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const PhysicalProfileScreen()),
+        MaterialPageRoute(builder: (context) => PhysicalProfileScreen(goal: _selectedGoal!)),
       );
     }
   }
