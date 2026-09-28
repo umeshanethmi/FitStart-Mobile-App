@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:fitstart_mobile_app/screens/home_screen.dart';
+import 'package:fitstart_mobile_app/services/database_service.dart';
+import 'package:fitstart_mobile_app/services/auth_service.dart';
 
 class PhysicalProfileScreen extends StatefulWidget {
-  const PhysicalProfileScreen({super.key});
+  final String goal;
+  const PhysicalProfileScreen({super.key, required this.goal});
 
   @override
   State<PhysicalProfileScreen> createState() => _PhysicalProfileScreenState();
@@ -13,13 +16,47 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   final _ageController = TextEditingController();
+  
+  bool _isLoading = false;
 
-  void _completeProfile() {
+  void _completeProfile() async {
     if (_formKey.currentState!.validate()) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-        (route) => false,
-      );
+      setState(() => _isLoading = true);
+      
+      try {
+        final authService = AuthService();
+        final dbService = DatabaseService();
+        final user = authService.currentUser;
+        
+        if (user != null) {
+          final profileData = {
+            'height': double.tryParse(_heightController.text) ?? 0.0,
+            'weight': double.tryParse(_weightController.text) ?? 0.0,
+            'age': int.tryParse(_ageController.text) ?? 0,
+            'goal': widget.goal,
+          };
+          
+          await dbService.createUserProfile(user.id, profileData);
+          await dbService.generateRuleBasedPlan(user.id, widget.goal);
+        }
+        
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error saving profile: $e')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
