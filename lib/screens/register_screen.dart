@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
+import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/screens/login_screen.dart';
 import 'package:fitstart_mobile_app/screens/role_selection_screen.dart';
 
@@ -25,28 +27,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_formKey.currentState!.validate() && _agreedToTerms) {
       setState(() => _isLoading = true);
       
-      final user = await _authService.registerWithEmailAndPassword(
-        _nameController.text.trim(),
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-      
-      setState(() => _isLoading = false);
+      try {
+        // 1. Create the user account using Firebase Authentication
+        final user = await _authService.registerWithEmailAndPassword(
+          _nameController.text.trim(),
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+        
+        // 2. If Auth is successful, create their Firestore document
+        if (user != null) {
+          final dbService = DatabaseService();
+          
+          // Save initial basic data. 
+          await dbService.createUserProfile(user.id, {
+            'email': user.email,
+            'name': user.name,
+            'createdAt': FieldValue.serverTimestamp(),
+            // Placeholders to be filled in the following screens
+            'goal': '',
+            'height': 0.0,
+            'weight': 0.0,
+            'age': 0,
+          });
 
-      if (user != null && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
-        );
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Registration failed. Please try again.'),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
+          // 3. Navigate to the next screen (e.g., Role Selection)
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+            );
+          }
+        }
+      } catch (e) {
+        // 4. Handle Errors (e.g., email already in use, weak password)
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Registration failed: ${e.toString()}'),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
