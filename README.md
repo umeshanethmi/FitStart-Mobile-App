@@ -14,10 +14,10 @@ FitStart is a mobile application designed specifically for fitness beginners to 
 ---
 
 ## 👥 Group Members
-* **Nethmi P.P.U.** – IT23861718 (Onboarding, Auth & Goal Selection Flow)
-* **Y.K.M.V.S.** – IT23861886 (Core Workout & Guidance Flow)
-* **Abeyrathna Bandara** – Progress Tracking, Rewards & AI Features Flow
-* **Matheews Janoshan H.B.K.D. Bandara** – User Testing Plan, Execution & Analysis
+* **Nethmi P.P.U.** 
+* **Y.K.M.V.S.** 
+* **Abeyrathna Bandara** 
+* **Matheews Janoshan H.B.K.D. Bandara** 
 
 ---
 © 2026 FitStart Team. All rights reserved.
