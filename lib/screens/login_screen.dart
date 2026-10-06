@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
 import 'package:fitstart_mobile_app/screens/home_screen.dart';
 import 'package:fitstart_mobile_app/screens/register_screen.dart';
@@ -20,33 +21,66 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = true;
 
-  void _login() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      
+  Future<void> _login() async {
+    if (_isLoading || !_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    try {
       final user = await _authService.signInWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text,
       );
-      
-      setState(() => _isLoading = false);
 
-      if (user != null && mounted) {
+      if (!mounted) return;
+      if (user != null) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
           (route) => false,
         );
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Login failed. Please check your credentials.'),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
+      } else {
+        _showLoginError('Unable to sign in. Please try again.');
       }
+    } on FirebaseAuthException catch (error) {
+      if (mounted) _showLoginError(_loginErrorMessage(error.code));
+    } catch (_) {
+      if (mounted) {
+        _showLoginError('Unable to sign in right now. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _loginErrorMessage(String code) {
+    switch (code) {
+      case 'invalid-email':
+        return 'Enter a valid email address.';
+      case 'invalid-credential':
+      case 'user-not-found':
+      case 'wrong-password':
+        return 'The email or password is incorrect.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait and try again.';
+      case 'network-request-failed':
+        return 'Check your internet connection and try again.';
+      default:
+        return 'Unable to sign in right now. Please try again.';
+    }
+  }
+
+  void _showLoginError(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
   }
 
   @override
@@ -271,7 +305,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => _showLoginError(
+                            'Password reset is not available yet.',
+                          ),
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: Size.zero,
@@ -363,7 +399,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: () {},
+                            onPressed: () => _showLoginError(
+                              'Apple sign-in is not available yet.',
+                            ),
                             icon: const Icon(Icons.apple, color: Colors.black),
                             label: const Text(
                               'Apple',
@@ -380,7 +418,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: OutlinedButton.icon(
-                            onPressed: () {},
+                            onPressed: () => _showLoginError(
+                              'Google sign-in is not available yet.',
+                            ),
                             icon: const Icon(Icons.g_mobiledata_rounded, color: Colors.black, size: 30),
                             label: const Text(
                               'Google',
