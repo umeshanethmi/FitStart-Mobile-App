@@ -21,8 +21,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _authService = AuthService();
 
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
   bool _obscurePassword = true;
-  bool _agreedToTerms = true;
+  bool _agreedToTerms = false;
 
   bool _isNameValid = false;
   bool _isEmailValid = false;
@@ -219,6 +221,90 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _signUpWithGoogle() async {
+    if (_isLoading || _isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isGoogleLoading = true);
+
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (!mounted) return;
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+          return; // User cancelled / closed the popup
+        }
+        _showRegistrationError(e.message ?? 'Google sign-up failed.');
+      }
+    } catch (e) {
+      if (mounted) {
+        final err = e.toString();
+        if (err.contains('network') || err.contains('Network')) {
+          _showRegistrationError('Network error during Google sign-up. Check your connection.');
+        } else if (err.contains('10') || err.contains('12500') || err.contains('developer_error')) {
+          _showRegistrationError('Google Sign-In configuration required: Please add SHA-1 fingerprint in Firebase Console.');
+        } else {
+          _showRegistrationError('Google sign-up could not be completed. Please try again.');
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleLoading = false);
+      }
+    }
+  }
+
+  Future<void> _signUpWithApple() async {
+    if (_isLoading || _isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isAppleLoading = true);
+
+    try {
+      final user = await _authService.signInWithApple();
+      if (!mounted) return;
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String msg = e.message ?? 'Apple sign-up failed.';
+        if (e.code == 'operation-not-allowed') {
+          msg = 'Apple Sign-In is only enabled for iOS devices unless configured with Apple Developer keys. Please use Google or Email to sign in.';
+        }
+        _showRegistrationError(msg);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showRegistrationError('Apple sign-up could not be completed. Please use Google or Email to sign in.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isAppleLoading = false);
+      }
+    }
+  }
+
+  void _showRegistrationError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
   }
 
   Widget _buildRequirementBadge(String text, bool met) {
@@ -827,7 +913,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Apple Button
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: (_isLoading || _isGoogleLoading || _isAppleLoading) ? null : _signUpWithApple,
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF0F172A),
@@ -842,25 +928,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           elevation: 1,
                           shadowColor: Colors.black.withValues(alpha: 0.04),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              Icons.apple,
-                              color: Colors.black,
-                              size: 20,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Apple',
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                        child: _isAppleLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.black,
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(
+                                    Icons.apple,
+                                    color: Colors.black,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Apple',
+                                    style: TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
 
@@ -869,7 +964,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Google Button
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: (_isLoading || _isGoogleLoading || _isAppleLoading) ? null : _signUpWithGoogle,
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF0F172A),
@@ -884,21 +979,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           elevation: 1,
                           shadowColor: Colors.black.withValues(alpha: 0.04),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            GoogleLogo(size: 17),
-                            SizedBox(width: 8),
-                            Text(
-                              'Google',
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                        child: _isGoogleLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF4285F4),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  GoogleLogo(size: 17),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Google',
+                                    style: TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],
