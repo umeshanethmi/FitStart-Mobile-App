@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fitstart_mobile_app/models/user_model.dart';
 
 class AuthService {
@@ -60,8 +62,49 @@ class AuthService {
     }
   }
 
+  // Check if an email is already registered in the system (Firestore)
+  Future<bool> isEmailRegistered(String email) async {
+    final cleanEmail = email.trim();
+    if (cleanEmail.isEmpty) return false;
+
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final lowerEmail = cleanEmail.toLowerCase();
+
+      final queryLower = await firestore
+          .collection('users')
+          .where('email', isEqualTo: lowerEmail)
+          .limit(1)
+          .get();
+
+      if (queryLower.docs.isNotEmpty) {
+        debugPrint("User email found in Firestore: $lowerEmail");
+        return true;
+      }
+
+      if (cleanEmail != lowerEmail) {
+        final queryExact = await firestore
+            .collection('users')
+            .where('email', isEqualTo: cleanEmail)
+            .limit(1)
+            .get();
+        if (queryExact.docs.isNotEmpty) {
+          debugPrint("User email found in Firestore (case-sensitive): $cleanEmail");
+          return true;
+        }
+      }
+    } catch (e) {
+      debugPrint("Firestore isEmailRegistered check error: $e");
+    }
+
+    return false;
+  }
+
   // Send password reset email
   Future<void> sendPasswordResetEmail(String email) async {
-    await _auth.sendPasswordResetEmail(email: email.trim());
+    final cleanEmail = email.trim();
+    debugPrint("Sending password reset email to: $cleanEmail");
+    await _auth.sendPasswordResetEmail(email: cleanEmail);
+    debugPrint("Password reset email sent to: $cleanEmail");
   }
 }

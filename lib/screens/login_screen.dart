@@ -213,14 +213,16 @@ class _LoginScreenState extends State<LoginScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
+          duration: const Duration(seconds: 6),
           content: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-              const SizedBox(width: 10),
+              const Icon(Icons.mark_email_read_rounded, color: Colors.white, size: 22),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   message,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
                 ),
               ),
             ],
@@ -320,7 +322,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 18),
                     const Text(
-                      'Enter your registered email address and we will send you a link to reset your password.',
+                      'Enter the email address registered with your FitStart account. We will verify your account and send a password reset link.',
                       style: TextStyle(
                         fontSize: 13.5,
                         color: Color(0xFF475569),
@@ -347,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontSize: 15,
                         ),
                         decoration: const InputDecoration(
-                          hintText: 'athlete@pulse.io',
+                          hintText: 'e.g. yourname@gmail.com',
                           hintStyle: TextStyle(
                             color: Color(0xFF94A3B8),
                             fontWeight: FontWeight.w400,
@@ -376,13 +378,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     if (dialogError != null) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        dialogError!,
-                        style: const TextStyle(
-                          color: Color(0xFFEF4444),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFCA5A5)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(top: 1.5),
+                              child: Icon(Icons.error_outline_rounded, color: Color(0xFFEF4444), size: 17),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                dialogError!,
+                                style: const TextStyle(
+                                  color: Color(0xFFDC2626),
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -398,14 +420,27 @@ class _LoginScreenState extends State<LoginScreen> {
                                   isSubmitting = true;
                                   dialogError = null;
                                 });
+
+                                final targetEmail = resetEmailController.text.trim();
+
+                                // 1. Verify that email is registered in the system
+                                final isRegistered = await _authService.isEmailRegistered(targetEmail);
+                                if (!isRegistered) {
+                                  if (!bottomSheetContext.mounted) return;
+                                  setSheetState(() {
+                                    dialogError = 'No account found with this email. Please check the spelling or sign up first.';
+                                    isSubmitting = false;
+                                  });
+                                  return;
+                                }
+
+                                // 2. If registered, send password reset link
                                 try {
-                                  await _authService.sendPasswordResetEmail(
-                                    resetEmailController.text.trim(),
-                                  );
+                                  await _authService.sendPasswordResetEmail(targetEmail);
                                   if (!mounted || !bottomSheetContext.mounted) return;
                                   Navigator.of(bottomSheetContext).pop();
                                   _showSuccessSnackBar(
-                                    'Password reset email sent! Check your inbox.',
+                                    'Password reset link sent to $targetEmail! Check your Inbox and Spam/Junk folder.',
                                   );
                                 } on FirebaseAuthException catch (e) {
                                   String msg;
@@ -431,7 +466,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   });
                                 } catch (_) {
                                   setSheetState(() {
-                                    dialogError = 'Unable to send reset email right now.';
+                                    dialogError = 'Unable to send reset email right now. Please try again.';
                                     isSubmitting = false;
                                   });
                                 }
