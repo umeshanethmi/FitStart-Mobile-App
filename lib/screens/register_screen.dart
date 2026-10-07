@@ -273,11 +273,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        _showRegistrationError(e.message ?? 'Apple sign-up failed.');
+        String msg = e.message ?? 'Apple sign-up failed.';
+        if (e.code == 'operation-not-allowed') {
+          msg = 'Apple Sign-In is only enabled for iOS devices unless configured with Apple Developer keys. Please use Google or Email to sign in.';
+        }
+        _showRegistrationError(msg);
       }
     } catch (e) {
       if (mounted) {
-        _showRegistrationError('Apple sign-up could not be completed. Please verify Apple provider in Firebase Console.');
+        _showRegistrationError('Apple sign-up could not be completed. Please use Google or Email to sign in.');
       }
     } finally {
       if (mounted) {

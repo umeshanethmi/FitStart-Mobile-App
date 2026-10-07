@@ -249,11 +249,15 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        _showLoginError(e.message ?? 'Apple sign-in failed.');
+        String msg = e.message ?? 'Apple sign-in failed.';
+        if (e.code == 'operation-not-allowed') {
+          msg = 'Apple Sign-In is only enabled for iOS devices unless configured with Apple Developer keys. Please use Google or Email to sign in.';
+        }
+        _showLoginError(msg);
       }
     } catch (e) {
       if (mounted) {
-        _showLoginError('Apple sign-in could not be completed. Please ensure Apple provider is configured in Firebase Console.');
+        _showLoginError('Apple sign-in could not be completed. Please use Google or Email to sign in.');
       }
     } finally {
       if (mounted) {
