@@ -379,7 +379,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 6),
 
                 // Centered App Icon
                 Center(
