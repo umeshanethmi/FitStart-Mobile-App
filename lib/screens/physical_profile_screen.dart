@@ -76,50 +76,44 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Section
+            // Top Nav Row: Back Button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                    onPressed: () {
-                      if (Navigator.canPop(context)) Navigator.pop(context);
-                    },
-                  ),
-                  Column(
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on_rounded, size: 16, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text(
-                            'STEP 3 OF 3',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.grey.shade700,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                        ],
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 1.2,
                       ),
-                      const SizedBox(height: 8),
-                      // Progress Bar
-                      Row(
-                        children: [
-                          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(2))),
-                          const SizedBox(width: 4),
-                          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(2))),
-                          const SizedBox(width: 4),
-                          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(2))),
-                        ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        size: 19,
+                        color: Color(0xFF0F172A),
                       ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(width: 48), // Balance
-                ],
+                ),
               ),
             ),
             const SizedBox(height: 24),

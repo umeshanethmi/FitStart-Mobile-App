@@ -22,169 +22,178 @@ class _GoalSelectorScreenState extends State<GoalSelectorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const brandBlue = Color(0xFF2563EB);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FD),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Top Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                    onPressed: () {
-                      if (Navigator.canPop(context)) Navigator.pop(context);
-                    },
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top Nav Row: Back Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: GestureDetector(
+                      onTap: () {
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFE2E8F0),
+                            width: 1.2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.arrow_back_rounded,
+                            size: 19,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  Column(
+                ),
+
+                const SizedBox(height: 8),
+
+                // Title & Subtitle Section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const Icon(Icons.location_on_rounded, size: 16, color: Colors.grey),
-                          const SizedBox(width: 4),
-                          Text(
-                            'STEP 2 OF 3',
+                          const Text(
+                            'What is your goal?',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.grey.shade700,
-                              letterSpacing: 1.0,
+                              fontSize: 27,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: -0.6,
+                            ),
+                          ),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            margin: const EdgeInsets.only(left: 4, top: 4),
+                            decoration: const BoxDecoration(
+                              color: brandBlue,
+                              shape: BoxShape.circle,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      // Progress Bar
-                      Row(
-                        children: [
-                          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(2))),
-                          const SizedBox(width: 4),
-                          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(2))),
-                          const SizedBox(width: 4),
-                          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-                        ],
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.more_horiz_rounded, size: 24, color: Colors.grey),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'What is your goal?',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Select your primary training focus. You can adjust this anytime.',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey.shade600,
-                      height: 1.4,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            
-            Expanded(
-              child: ListView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                children: [
-                  _buildGoalCard(
-                    title: 'Lose Weight',
-                    description: 'Burn extra fat, boost metabolism, and get leaner.',
-                    icon: Icons.local_fire_department_rounded,
-                    isPopular: true,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildGoalCard(
-                    title: 'Build Muscle',
-                    description: 'Increase muscle size, strength gains, & progressive overload.',
-                    icon: Icons.fitness_center_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildGoalCard(
-                    title: 'Stay Fit',
-                    description: 'Cardiovascular mobility, longevity & wellness.',
-                    icon: Icons.monitor_heart_rounded,
-                  ),
-                ],
-              ),
-            ),
-            
-            // Bottom Next Button
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Container(
-                height: 56,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: _selectedGoal != null
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFF2563EB).withOpacity(0.25),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          )
-                        ]
-                      : [],
-                ),
-                child: ElevatedButton(
-                  onPressed: _selectedGoal != null ? _navigateToNext : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    disabledBackgroundColor: Colors.grey.shade300,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Next',
+                      const Text(
+                        'Select your primary training focus. You can adjust this anytime.',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: _selectedGoal != null ? Colors.white : Colors.grey.shade500,
-                          letterSpacing: 0.5,
+                          fontSize: 14,
+                          color: Color(0xFF64748B),
+                          height: 1.45,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        color: _selectedGoal != null ? Colors.white : Colors.grey.shade500,
-                        size: 20,
-                      ),
                     ],
                   ),
                 ),
-              ),
+
+                const SizedBox(height: 20),
+
+                // Goals List
+                Expanded(
+                  child: ListView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    children: [
+                      _buildGoalCard(
+                        title: 'Lose Weight',
+                        badgeText: 'POPULAR',
+                        description: 'Burn fat, boost metabolism, and get lean.',
+                        icon: Icons.local_fire_department_rounded,
+                      ),
+                      const SizedBox(height: 14),
+                      _buildGoalCard(
+                        title: 'Build Muscle',
+                        badgeText: 'STRENGTH',
+                        description: 'Increase muscle size, strength, and power.',
+                        icon: Icons.fitness_center_rounded,
+                      ),
+                      const SizedBox(height: 14),
+                      _buildGoalCard(
+                        title: 'Stay Fit',
+                        badgeText: 'WELLNESS',
+                        description: 'Improve mobility, stamina, and longevity.',
+                        icon: Icons.monitor_heart_rounded,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+
+                // Bottom Action Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                  child: SizedBox(
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _selectedGoal != null ? _navigateToNext : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: brandBlue,
+                        disabledBackgroundColor: const Color(0xFFE2E8F0),
+                        elevation: _selectedGoal != null ? 4 : 0,
+                        shadowColor: brandBlue.withValues(alpha: 0.35),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Next',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: _selectedGoal != null ? Colors.white : const Color(0xFF94A3B8),
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 19,
+                            color: _selectedGoal != null ? Colors.white : const Color(0xFF94A3B8),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -192,106 +201,105 @@ class _GoalSelectorScreenState extends State<GoalSelectorScreen> {
 
   Widget _buildGoalCard({
     required String title,
+    required String badgeText,
     required String description,
     required IconData icon,
-    bool isPopular = false,
   }) {
     final isSelected = _selectedGoal == title;
+    const brandBlue = Color(0xFF2563EB);
 
     return GestureDetector(
       onTap: () => setState(() => _selectedGoal = title),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(20),
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF0F5FF) : Colors.white, // Very light blue if selected
+          color: isSelected ? const Color(0xFFF0F5FF) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF2563EB) : Colors.grey.shade200,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? brandBlue : const Color(0xFFE2E8F0),
+            width: isSelected ? 2 : 1.2,
           ),
           boxShadow: [
-            if (!isSelected)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
+            BoxShadow(
+              color: isSelected
+                  ? brandBlue.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.025),
+              blurRadius: isSelected ? 12 : 6,
+              offset: const Offset(0, 3),
+            ),
           ],
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Icon
-            Container(
-              padding: const EdgeInsets.all(12),
+            // Icon Container
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF8FAFC),
-                shape: BoxShape.circle,
+                color: isSelected ? brandBlue : const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(13),
               ),
-              child: Icon(
-                icon,
-                color: isSelected ? Colors.white : Colors.black87,
-                size: 24,
+              child: Center(
+                child: Icon(
+                  icon,
+                  color: isSelected ? Colors.white : brandBlue,
+                  size: 23,
+                ),
               ),
             ),
-            const SizedBox(width: 16),
-            // Texts
+            const SizedBox(width: 15),
+
+            // Text Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF1E293B),
-                        ),
+                  // Subtle Tag Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: const Text(
+                      badgeText,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: brandBlue,
+                        letterSpacing: 0.5,
                       ),
-                      if (isPopular) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDBEAFE),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'Popular',
-                            style: TextStyle(
-                              color: Color(0xFF1D4ED8),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ]
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
+
+                  // Title
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF1E293B),
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+
+                  // Description
                   Text(
                     description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                      height: 1.4,
-                      fontWeight: FontWeight.w500,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xFF64748B),
+                      height: 1.35,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Checkmark
-            Container(
-              margin: const EdgeInsets.only(top: 8),
-              child: Icon(
-                isSelected ? Icons.check_circle_rounded : Icons.check_rounded,
-                color: isSelected ? const Color(0xFF2563EB) : Colors.grey.shade300,
-                size: 24,
               ),
             ),
           ],
