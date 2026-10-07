@@ -423,18 +423,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 final targetEmail = resetEmailController.text.trim();
 
-                                // 1. Verify that email is registered in the system
-                                final isRegistered = await _authService.isEmailRegistered(targetEmail);
-                                if (!isRegistered) {
-                                  if (!bottomSheetContext.mounted) return;
-                                  setSheetState(() {
-                                    dialogError = 'No account found with this email. Please check the spelling or sign up first.';
-                                    isSubmitting = false;
-                                  });
-                                  return;
-                                }
-
-                                // 2. If registered, send password reset link
                                 try {
                                   await _authService.sendPasswordResetEmail(targetEmail);
                                   if (!mounted || !bottomSheetContext.mounted) return;
