@@ -101,6 +101,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
 
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = true;
   bool _isEmailValid = false;
@@ -189,6 +191,73 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           setState(() => _isLoading = false);
         }
+      }
+    }
+  }
+
+  Future<void> _loginWithGoogle() async {
+    if (_isLoading || _isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isGoogleLoading = true);
+
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (!mounted) return;
+      if (user != null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String msg = e.message ?? 'Google sign-in failed.';
+        if (e.code == 'account-exists-with-different-credential') {
+          msg = 'An account already exists with a different sign-in method.';
+        }
+        _showLoginError(msg);
+      }
+    } catch (e) {
+      if (mounted) {
+        final err = e.toString();
+        if (err.contains('network') || err.contains('Network')) {
+          _showLoginError('Network error during Google sign-in. Check your connection.');
+        } else if (err.contains('10') || err.contains('12500') || err.contains('developer_error')) {
+          _showLoginError('Google Sign-In configuration required: Please add SHA-1 fingerprint in Firebase Console.');
+        } else {
+          _showLoginError('Google sign-in could not be completed. Please try again.');
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleLoading = false);
+      }
+    }
+  }
+
+  Future<void> _loginWithApple() async {
+    if (_isLoading || _isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isAppleLoading = true);
+
+    try {
+      final user = await _authService.signInWithApple();
+      if (!mounted) return;
+      if (user != null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        _showLoginError(e.message ?? 'Apple sign-in failed.');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showLoginError('Apple sign-in could not be completed. Please ensure Apple provider is configured in Firebase Console.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isAppleLoading = false);
       }
     }
   }
@@ -974,7 +1043,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Apple Button
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => _showLoginError('Apple sign-in is not available yet.'),
+                          onPressed: (_isLoading || _isGoogleLoading || _isAppleLoading) ? null : _loginWithApple,
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF0F172A),
@@ -989,25 +1058,34 @@ class _LoginScreenState extends State<LoginScreen> {
                             elevation: 1,
                             shadowColor: Colors.black.withValues(alpha: 0.04),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(
-                                Icons.apple,
-                                color: Colors.black,
-                                size: 20,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Apple',
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
+                          child: _isAppleLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.black,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(
+                                      Icons.apple,
+                                      color: Colors.black,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Apple',
+                                      style: TextStyle(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
 
@@ -1016,7 +1094,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Google Button
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => _showLoginError('Google sign-in is not available yet.'),
+                          onPressed: (_isLoading || _isGoogleLoading || _isAppleLoading) ? null : _loginWithGoogle,
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF0F172A),
@@ -1031,21 +1109,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             elevation: 1,
                             shadowColor: Colors.black.withValues(alpha: 0.04),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              GoogleLogo(size: 17),
-                              SizedBox(width: 8),
-                              Text(
-                                'Google',
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
+                          child: _isGoogleLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF4285F4),
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    GoogleLogo(size: 17),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Google',
+                                      style: TextStyle(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ],
