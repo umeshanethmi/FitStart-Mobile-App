@@ -46,24 +46,6 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
     return null;
   }
 
-  String get _bmiCategory {
-    final bmi = _bmi;
-    if (bmi == null) return '';
-    if (bmi < 18.5) return 'Underweight';
-    if (bmi < 25.0) return 'Healthy Weight';
-    if (bmi < 30.0) return 'Overweight';
-    return 'High BMI';
-  }
-
-  Color get _bmiColor {
-    final bmi = _bmi;
-    if (bmi == null) return const Color(0xFF2563EB);
-    if (bmi < 18.5) return const Color(0xFFF59E0B);
-    if (bmi < 25.0) return const Color(0xFF10B981);
-    if (bmi < 30.0) return const Color(0xFFF97316);
-    return const Color(0xFFEF4444);
-  }
-
   void _completeProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -116,7 +98,6 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
   @override
   Widget build(BuildContext context) {
     const brandBlue = Color(0xFF2563EB);
-    final currentBmi = _bmi;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -206,7 +187,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            'Enter your biometrics to calibrate your AI workout routine.',
+                            'Enter your biometrics to calibrate your personalized workout routine.',
                             style: TextStyle(
                               fontSize: 14,
                               color: Color(0xFF64748B),
@@ -238,7 +219,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             ],
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 22),
 
                           // 2. Biometric Input Fields
                           _buildBiometricCard(
@@ -256,7 +237,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             },
                           ),
 
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
 
                           _buildBiometricCard(
                             label: 'WEIGHT',
@@ -273,7 +254,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             },
                           ),
 
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
 
                           _buildBiometricCard(
                             label: 'AGE',
@@ -290,7 +271,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             },
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 22),
 
                           // 3. Activity Level Chips
                           const Text(
@@ -313,112 +294,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             ],
                           ),
 
-                          const SizedBox(height: 20),
-
-                          // 4. Advanced Live AI Calibration Insight Card
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: currentBmi != null ? _bmiColor.withValues(alpha: 0.05) : Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: currentBmi != null ? _bmiColor.withValues(alpha: 0.35) : const Color(0xFFE2E8F0),
-                                width: 1.2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.02),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: currentBmi != null ? _bmiColor.withValues(alpha: 0.12) : const Color(0xFFEFF6FF),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Center(
-                                    child: Icon(
-                                      currentBmi != null ? Icons.health_and_safety_rounded : Icons.auto_awesome_rounded,
-                                      color: currentBmi != null ? _bmiColor : brandBlue,
-                                      size: 22,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      if (currentBmi != null) ...[
-                                        Row(
-                                          children: [
-                                            Text(
-                                              'BMI: ${currentBmi.toStringAsFixed(1)}',
-                                              style: TextStyle(
-                                                fontSize: 14.5,
-                                                fontWeight: FontWeight.w800,
-                                                color: _bmiColor,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: _bmiColor.withValues(alpha: 0.15),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                              child: Text(
-                                                _bmiCategory,
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: _bmiColor,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          'Calibrating custom ${widget.goal} workout plans.',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF64748B),
-                                          ),
-                                        ),
-                                      ] else ...[
-                                        const Text(
-                                          'AI Biometric Calibration',
-                                          style: TextStyle(
-                                            fontSize: 13.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: Color(0xFF0F172A),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        const Text(
-                                          'Enter height & weight to calculate live BMI metrics.',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF64748B),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
@@ -489,7 +365,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
         onTap: () => setState(() => _selectedGender = label),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 11),
+          padding: const EdgeInsets.symmetric(vertical: 13),
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -538,7 +414,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
         onTap: () => setState(() => _selectedActivity = title),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -546,6 +422,13 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
               color: isSelected ? brandBlue : const Color(0xFFE2E8F0),
               width: isSelected ? 1.8 : 1.2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: isSelected ? brandBlue.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.02),
+                blurRadius: isSelected ? 6 : 3,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             children: [
@@ -594,28 +477,28 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 6,
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
             // Icon Badge
             Container(
-              width: 42,
-              height: 42,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(11),
+                borderRadius: BorderRadius.circular(13),
               ),
               child: Center(
                 child: Icon(
                   icon,
                   color: brandBlue,
-                  size: 20,
+                  size: 22,
                 ),
               ),
             ),
@@ -625,23 +508,25 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     label,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF64748B),
                       letterSpacing: 0.6,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   TextFormField(
                     controller: controller,
                     keyboardType: keyboardType,
                     style: const TextStyle(
                       color: Color(0xFF0F172A),
                       fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                      fontSize: 17,
                     ),
                     decoration: InputDecoration(
                       isDense: true,
@@ -649,7 +534,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontWeight: FontWeight.w400,
-                        fontSize: 15,
+                        fontSize: 16,
                       ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 4),
@@ -662,15 +547,15 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
 
             // Unit Pill
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(9),
               ),
               child: Text(
                 unit,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF475569),
                 ),
