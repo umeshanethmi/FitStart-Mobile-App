@@ -238,6 +238,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
+        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+          return; // User cancelled / closed the popup
+        }
         _showRegistrationError(e.message ?? 'Google sign-up failed.');
       }
     } catch (e) {

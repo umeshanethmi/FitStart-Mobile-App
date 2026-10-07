@@ -210,6 +210,9 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
+        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+          return; // User cancelled / closed the popup
+        }
         String msg = e.message ?? 'Google sign-in failed.';
         if (e.code == 'account-exists-with-different-credential') {
           msg = 'An account already exists with a different sign-in method.';

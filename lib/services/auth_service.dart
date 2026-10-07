@@ -97,7 +97,14 @@ class AuthService {
       final UserCredential userCredential;
       if (kIsWeb) {
         final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        userCredential = await _auth.signInWithPopup(googleProvider);
+        try {
+          userCredential = await _auth.signInWithPopup(googleProvider);
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+            return null; // User simply closed the popup window
+          }
+          rethrow;
+        }
       } else {
         final GoogleSignIn googleSignIn = GoogleSignIn();
         final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
@@ -133,11 +140,19 @@ class AuthService {
       appleProvider.addScope('email');
       appleProvider.addScope('name');
 
-      final UserCredential userCredential = kIsWeb
-          ? await _auth.signInWithPopup(appleProvider)
-          : await _auth.signInWithProvider(appleProvider);
-      final User? user = userCredential.user;
+      final UserCredential userCredential;
+      try {
+        userCredential = kIsWeb
+            ? await _auth.signInWithPopup(appleProvider)
+            : await _auth.signInWithProvider(appleProvider);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+          return null; // User simply closed the popup window
+        }
+        rethrow;
+      }
 
+      final User? user = userCredential.user;
       if (user != null) {
         await _syncSocialUserProfile(user);
       }
