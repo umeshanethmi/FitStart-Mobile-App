@@ -459,7 +459,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontSize: 15,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Alex Morgan',
+                      hintText: 'Enter your full name',
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontWeight: FontWeight.w400,
@@ -534,7 +534,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontSize: 15,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'alex@pulse.io',
+                      hintText: 'Enter your email address',
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontWeight: FontWeight.w400,
@@ -626,7 +626,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontSize: 15,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'K1net1cPuls3!',
+                      hintText: 'Enter at least 8 characters',
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontWeight: FontWeight.w400,

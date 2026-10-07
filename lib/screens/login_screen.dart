@@ -743,7 +743,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontSize: 15,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'athlete@pulse.io',
+                        hintText: 'Enter your email address',
                         hintStyle: const TextStyle(
                           color: Color(0xFF94A3B8),
                           fontWeight: FontWeight.w400,
@@ -849,7 +849,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontSize: 15,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'SuperSecret123!',
+                        hintText: 'Enter your password',
                         hintStyle: const TextStyle(
                           color: Color(0xFF94A3B8),
                           fontWeight: FontWeight.w400,
