@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
+import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/screens/home_screen.dart';
 import 'package:fitstart_mobile_app/screens/register_screen.dart';
+import 'package:fitstart_mobile_app/screens/trainer_dashboard_screen.dart';
+import 'package:fitstart_mobile_app/screens/therapist_dashboard_screen.dart';
 
 class GoogleLogo extends StatelessWidget {
   final double size;
@@ -134,10 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         if (user != null && mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (route) => false,
-          );
+          await _routeUserBasedOnRole(user.id);
         }
       } on FirebaseAuthException catch (e) {
         if (mounted) {
@@ -203,10 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = await _authService.signInWithGoogle();
       if (!mounted) return;
       if (user != null) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (route) => false,
-        );
+        await _routeUserBasedOnRole(user.id);
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -245,10 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = await _authService.signInWithApple();
       if (!mounted) return;
       if (user != null) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (route) => false,
-        );
+        await _routeUserBasedOnRole(user.id);
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -266,6 +260,42 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _isAppleLoading = false);
       }
+    }
+  }
+
+  Future<void> _routeUserBasedOnRole(String uid) async {
+    try {
+      final doc = await DatabaseService().getUserProfile(uid);
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        final role = data['role'] as String?;
+        if (role == 'Trainer') {
+          if (mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const TrainerDashboardScreen()),
+              (route) => false,
+            );
+          }
+          return;
+        } else if (role == 'Therapist') {
+          if (mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const TherapistDashboardScreen()),
+              (route) => false,
+            );
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint("Error routing role: $e");
+    }
+
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
+      );
     }
   }
 

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fitstart_mobile_app/screens/goal_selector_screen.dart';
+import 'package:fitstart_mobile_app/screens/trainer_dashboard_screen.dart';
+import 'package:fitstart_mobile_app/screens/therapist_dashboard_screen.dart';
+import 'package:fitstart_mobile_app/services/auth_service.dart';
+import 'package:fitstart_mobile_app/services/database_service.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -11,16 +15,28 @@ class RoleSelectionScreen extends StatefulWidget {
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   String? _selectedRole;
 
-  void _navigateToNext() {
-    if (_selectedRole == null) return;
+  void _navigateToNext() async {
+    final role = _selectedRole;
+    if (role == null) return;
+
+    try {
+      final user = AuthService().currentUser;
+      if (user != null) {
+        await DatabaseService().createUserProfile(user.id, {'role': role});
+      }
+    } catch (e) {
+      debugPrint("Error saving role: $e");
+    }
+
+    if (!mounted) return;
 
     Widget nextScreen;
-    switch (_selectedRole) {
+    switch (role) {
       case 'Trainer':
-        nextScreen = const TrainerDashboardPlaceholder();
+        nextScreen = const TrainerDashboardScreen();
         break;
       case 'Therapist':
-        nextScreen = const TherapistDashboardPlaceholder();
+        nextScreen = const TherapistDashboardScreen();
         break;
       case 'Beginner':
       default:
@@ -369,16 +385,4 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       ),
     );
   }
-}
-
-class TrainerDashboardPlaceholder extends StatelessWidget {
-  const TrainerDashboardPlaceholder({super.key});
-  @override
-  Widget build(BuildContext context) => const Scaffold(backgroundColor: Color(0xFFF8FAFC), body: Center(child: Text('Trainer Dashboard', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold))));
-}
-
-class TherapistDashboardPlaceholder extends StatelessWidget {
-  const TherapistDashboardPlaceholder({super.key});
-  @override
-  Widget build(BuildContext context) => const Scaffold(backgroundColor: Color(0xFFF8FAFC), body: Center(child: Text('Therapist Dashboard', style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold))));
 }
