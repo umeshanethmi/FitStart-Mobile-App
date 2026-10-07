@@ -312,17 +312,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
-          met ? Icons.check_rounded : Icons.check_rounded,
-          size: 13,
-          color: met ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+          met ? Icons.check_circle_rounded : Icons.circle_outlined,
+          size: 12,
+          color: met ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
         ),
-        const SizedBox(width: 3),
+        const SizedBox(width: 4),
         Text(
           text,
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: met ? FontWeight.w700 : FontWeight.w500,
-            color: met ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+            color: met ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
           ),
         ),
       ],
