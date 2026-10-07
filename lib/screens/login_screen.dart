@@ -193,6 +193,20 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _showLoginError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -552,7 +566,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // Forgot Password Link
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () => _showLoginError('Password reset is not available yet.'),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
@@ -658,7 +672,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Apple Button
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () => _showLoginError('Apple sign-in is not available yet.'),
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF0F172A),
@@ -700,7 +714,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Google Button
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () => _showLoginError('Google sign-in is not available yet.'),
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF0F172A),

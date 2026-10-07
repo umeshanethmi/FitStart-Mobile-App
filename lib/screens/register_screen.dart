@@ -22,7 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _isLoading = false;
   bool _obscurePassword = true;
-  bool _agreedToTerms = true;
+  bool _agreedToTerms = false;
 
   bool _isNameValid = false;
   bool _isEmailValid = false;
@@ -219,6 +219,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _showRegistrationError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
   }
 
   Widget _buildRequirementBadge(String text, bool met) {
@@ -827,7 +841,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Apple Button
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () => _showRegistrationError('Apple sign-up is not available yet.'),
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF0F172A),
@@ -869,7 +883,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Google Button
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () => _showRegistrationError('Google sign-up is not available yet.'),
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF0F172A),
