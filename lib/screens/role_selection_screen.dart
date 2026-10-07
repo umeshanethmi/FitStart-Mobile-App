@@ -13,7 +13,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   void _navigateToNext() {
     if (_selectedRole == null) return;
-    
+
     Widget nextScreen;
     switch (_selectedRole) {
       case 'Trainer':
@@ -36,6 +36,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const brandBlue = Color(0xFF2563EB);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -107,7 +109,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                               width: 6,
                               height: 6,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF2563EB),
+                                color: brandBlue,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -117,7 +119,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF2563EB),
+                                color: brandBlue,
                                 letterSpacing: 0.7,
                               ),
                             ),
@@ -155,7 +157,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             height: 6,
                             margin: const EdgeInsets.only(left: 4, top: 4),
                             decoration: const BoxDecoration(
-                              color: Color(0xFF2563EB),
+                              color: brandBlue,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -163,7 +165,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Select your primary role so we can personalize your training journey and features.',
+                        'Select your role to personalize your training journey and tools.',
                         style: TextStyle(
                           fontSize: 14,
                           color: Color(0xFF64748B),
@@ -186,27 +188,24 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       _buildRoleCard(
                         title: 'Beginner / Athlete',
                         badgeText: 'FITNESS & WORKOUTS',
-                        description: 'Track your daily workouts, follow home fitness routines, and hit your fitness milestones.',
+                        description: 'Track workouts and home fitness plans.',
                         icon: Icons.fitness_center_rounded,
-                        accentColor: const Color(0xFF2563EB),
                         roleValue: 'Beginner',
                       ),
                       const SizedBox(height: 14),
                       _buildRoleCard(
                         title: 'Fitness Trainer',
                         badgeText: 'COACH & INSTRUCTOR',
-                        description: 'Create custom workout programs, monitor client progress, and coach your athletes.',
+                        description: 'Manage clients and custom workout plans.',
                         icon: Icons.sports_rounded,
-                        accentColor: const Color(0xFFEA580C),
                         roleValue: 'Trainer',
                       ),
                       const SizedBox(height: 14),
                       _buildRoleCard(
                         title: 'Physical Therapist',
                         badgeText: 'CLINICAL & REHAB',
-                        description: 'Provide medical recovery plans, injury rehab guidance, and safety compliance.',
+                        description: 'Injury rehabilitation and recovery care.',
                         icon: Icons.medical_services_rounded,
-                        accentColor: const Color(0xFF059669),
                         roleValue: 'Therapist',
                       ),
                       const SizedBox(height: 16),
@@ -222,10 +221,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     child: ElevatedButton(
                       onPressed: _selectedRole != null ? _navigateToNext : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
+                        backgroundColor: brandBlue,
                         disabledBackgroundColor: const Color(0xFFE2E8F0),
                         elevation: _selectedRole != null ? 4 : 0,
-                        shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.35),
+                        shadowColor: brandBlue.withValues(alpha: 0.35),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -266,54 +265,55 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     required String badgeText,
     required String description,
     required IconData icon,
-    required Color accentColor,
     required String roleValue,
   }) {
     final isSelected = _selectedRole == roleValue;
+    const brandBlue = Color(0xFF2563EB);
 
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = roleValue),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? accentColor.withValues(alpha: 0.04) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          color: isSelected ? const Color(0xFFF0F5FF) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? accentColor : const Color(0xFFE2E8F0),
+            color: isSelected ? brandBlue : const Color(0xFFE2E8F0),
             width: isSelected ? 2 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? accentColor.withValues(alpha: 0.12)
+                  ? brandBlue.withValues(alpha: 0.12)
                   : Colors.black.withValues(alpha: 0.025),
-              blurRadius: isSelected ? 14 : 8,
+              blurRadius: isSelected ? 12 : 6,
               offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Vibrant Icon Box
-            Container(
-              width: 48,
-              height: 48,
+            // Blue Icon Box (consistent brand color for all roles)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
-                color: isSelected ? accentColor : accentColor.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(14),
+                color: isSelected ? brandBlue : const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(13),
               ),
               child: Center(
                 child: Icon(
                   icon,
-                  color: isSelected ? Colors.white : accentColor,
-                  size: 24,
+                  color: isSelected ? Colors.white : brandBlue,
+                  size: 23,
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 15),
 
             // Card Text Details
             Expanded(
@@ -322,57 +322,46 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 children: [
                   // Subtle Tag Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                     decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.09),
-                      borderRadius: BorderRadius.circular(6),
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(5),
                     ),
-                    child: Text(
+                    child: const Text(
                       badgeText,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w800,
-                        color: accentColor,
-                        letterSpacing: 0.6,
+                        color: brandBlue,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
 
                   // Title
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 16.5,
+                      fontSize: 16,
                       fontWeight: FontWeight.w800,
                       color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF1E293B),
                       letterSpacing: -0.2,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 3),
 
-                  // Description
+                  // Short Clean Description
                   Text(
                     description,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12.5,
                       color: Color(0xFF64748B),
-                      height: 1.4,
+                      height: 1.35,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(width: 10),
-
-            // Selection Radio / Check Indicator
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              child: Icon(
-                isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-                color: isSelected ? accentColor : const Color(0xFFCBD5E1),
-                size: 22,
               ),
             ),
           ],
