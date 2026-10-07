@@ -327,9 +327,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       color: const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(5),
                     ),
-                    child: const Text(
+                    child: Text(
                       badgeText,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w800,
                         color: brandBlue,
