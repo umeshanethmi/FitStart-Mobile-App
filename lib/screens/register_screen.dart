@@ -419,36 +419,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
 
-                    // Help Button
-                    GestureDetector(
-                      onTap: () {},
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFE2E8F0),
-                            width: 1.2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.help_outline_rounded,
-                            size: 19,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                      ),
-                    ),
+                    // Placeholder to keep the step pill centered
+                    const SizedBox(width: 40),
                   ],
                 ),
 
