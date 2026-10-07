@@ -59,4 +59,9 @@ class AuthService {
       print("Error in signOut: $e");
     }
   }
+
+  // Send password reset email
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email.trim());
+  }
 }
