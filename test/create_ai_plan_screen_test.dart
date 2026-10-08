@@ -12,6 +12,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(const MaterialApp(home: CreateAiPlanScreen()));
+      await tester.enterText(find.byType(TextFormField), 'My Morning Workout');
       expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(3));
       expect(find.byType(DropdownButtonFormField<int>), findsNWidgets(2));
       await tester.tap(find.text('Stay Fit').first);
@@ -23,4 +24,17 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('blank or whitespace-only plan names block generation', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: CreateAiPlanScreen()));
+    await tester.enterText(find.byType(TextFormField), '   ');
+    await tester.ensureVisible(find.text('Generate Plan'));
+    await tester.tap(find.text('Generate Plan'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Enter a workout plan name.'));
+    expect(find.text('Enter a workout plan name.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

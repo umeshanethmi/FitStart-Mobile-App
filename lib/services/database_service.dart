@@ -251,6 +251,7 @@ class DatabaseService {
   Future<String> generateRuleBasedPlan(
     String uid,
     String goal, {
+    String? planName,
     String experience = 'Beginner',
     String equipment = 'None',
     int daysPerWeek = 3,
@@ -259,6 +260,7 @@ class DatabaseService {
     if (uid.trim().isEmpty) throw ArgumentError('A user ID is required.');
     final newPlan = WorkoutPlanGenerator().generate(
       goal: goal,
+      planName: planName,
       experience: experience,
       equipment: equipment,
       daysPerWeek: daysPerWeek,

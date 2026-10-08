@@ -13,6 +13,7 @@ class CreateAiPlanScreen extends StatefulWidget {
 
 class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   String _goal = 'Stay Fit';
   String _experience = 'Beginner';
   String _equipment = 'None';
@@ -21,6 +22,12 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
   bool _saving = false;
   Map<String, dynamic>? _savedPlan;
   String? _error;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   Future<void> _generate() async {
     if (_saving || !_formKey.currentState!.validate()) return;
@@ -36,6 +43,7 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
     try {
       final plan = WorkoutPlanGenerator().generate(
         goal: _goal,
+        planName: _nameController.text,
         experience: _experience,
         equipment: _equipment,
         daysPerWeek: _days,
@@ -44,6 +52,7 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
       await DatabaseService().generateRuleBasedPlan(
         user.id,
         _goal,
+        planName: _nameController.text,
         experience: _experience,
         equipment: _equipment,
         daysPerWeek: _days,
@@ -115,6 +124,26 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      TextFormField(
+                        controller: _nameController,
+                        enabled: !_saving,
+                        maxLength: 60,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Workout plan name',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          final name = value?.trim() ?? '';
+                          if (name.isEmpty) return 'Enter a workout plan name.';
+                          if (name.length > 60) {
+                            return 'Use 60 characters or fewer.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
                       _selection(
                         'Fitness goal',
                         _goal,

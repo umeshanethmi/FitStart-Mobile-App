@@ -4,6 +4,33 @@ import 'package:fitstart_mobile_app/services/workout_plan_generator.dart';
 void main() {
   final generator = WorkoutPlanGenerator();
 
+  test('custom plan name is trimmed and used as the title', () {
+    final plan = generator.generate(
+      goal: 'Stay Fit',
+      planName: '  Morning Training  ',
+    );
+    expect(plan['title'], 'Morning Training');
+    expect((plan['preferences'] as Map)['goal'], 'Stay Fit');
+  });
+
+  test(
+    'invalid custom names are rejected and legacy callers retain a default',
+    () {
+      expect(
+        () => generator.generate(goal: 'Stay Fit', planName: '   '),
+        throwsArgumentError,
+      );
+      expect(
+        () => generator.generate(
+          goal: 'Stay Fit',
+          planName: List.filled(61, 'x').join(),
+        ),
+        throwsArgumentError,
+      );
+      expect(generator.generate(goal: 'Stay Fit')['title'], 'Stay Fit Plan');
+    },
+  );
+
   test('no-equipment muscle plan uses bodyweight exercises', () {
     final plan = generator.generate(goal: 'Build Muscle');
     final exercises = plan['exercises'] as List;

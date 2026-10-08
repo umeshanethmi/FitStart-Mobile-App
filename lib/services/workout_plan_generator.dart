@@ -6,11 +6,18 @@ class WorkoutPlanGenerator {
 
   Map<String, dynamic> generate({
     required String goal,
+    String? planName,
     String experience = 'Beginner',
     String equipment = 'None',
     int daysPerWeek = 3,
     int durationMinutes = 30,
   }) {
+    final title = planName?.trim() ?? '$goal Plan';
+    if (title.isEmpty || title.length > 60) {
+      throw ArgumentError(
+        'Enter a workout plan name between 1 and 60 characters.',
+      );
+    }
     if (!goals.contains(goal) ||
         !levels.contains(experience) ||
         !equipmentOptions.contains(equipment) ||
@@ -43,7 +50,7 @@ class WorkoutPlanGenerator {
     };
 
     return {
-      'title': '$goal Plan',
+      'title': title,
       'isActive': true,
       'generationMethod': 'rule-based',
       'preferences': {
