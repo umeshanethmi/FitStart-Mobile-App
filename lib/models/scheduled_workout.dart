@@ -6,6 +6,7 @@ class ScheduledWorkout {
   final String title;
   final DateTime scheduledAt;
   final List<Map<String, dynamic>> exercises;
+  final Map<String, dynamic> preferences;
   final int? reminderMinutes;
   final bool reminderEnabled;
 
@@ -19,6 +20,9 @@ class ScheduledWorkout {
       scheduledAt = (data['scheduledAt'] as Timestamp).toDate().toLocal(),
       reminderMinutes = (data['reminder'] as Map?)?['minutesBefore'] as int?,
       reminderEnabled = (data['reminder'] as Map?)?['enabled'] == true,
+      preferences = Map<String, dynamic>.from(
+        data['preferences'] as Map? ?? {},
+      ),
       exercises = (data['exercises'] as List? ?? [])
           .map((exercise) => Map<String, dynamic>.from(exercise as Map))
           .toList();

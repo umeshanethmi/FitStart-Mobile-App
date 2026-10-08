@@ -8,6 +8,8 @@ import 'package:fitstart_mobile_app/widgets/delete_workout_plan_dialog.dart';
 import 'package:fitstart_mobile_app/widgets/schedule_workout_dialog.dart';
 import 'package:fitstart_mobile_app/screens/reminders_screen.dart';
 import 'package:fitstart_mobile_app/widgets/workout_page.dart';
+import 'package:fitstart_mobile_app/models/training_workout_plan.dart';
+import 'package:fitstart_mobile_app/screens/daily_workout_plan_screen.dart';
 
 class WorkoutScheduleScreen extends StatefulWidget {
   const WorkoutScheduleScreen({super.key});
@@ -202,6 +204,18 @@ class ScheduledWorkoutDetails extends StatelessWidget {
     required this.onReminder,
   });
 
+  void _start(BuildContext context) {
+    try {
+      final plan = TrainingWorkoutPlan.fromScheduledWorkout(workout);
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => DailyWorkoutPlanScreen(plan: plan)),
+      );
+    } on FormatException catch (error) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
@@ -214,67 +228,85 @@ class ScheduledWorkoutDetails extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         side: const BorderSide(color: WorkoutPage.line),
       ),
-      child: ExpansionTile(
-        shape: const Border(),
-        collapsedShape: const Border(),
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: SizedBox(
-          width: 40,
-          height: 40,
-          child: Center(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                '${workout.scheduledAt.day}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: WorkoutPage.green,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ExpansionTile(
+            shape: const Border(),
+            collapsedShape: const Border(),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            leading: SizedBox(
+              width: 40,
+              height: 40,
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '${workout.scheduledAt.day}',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: WorkoutPage.green,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        title: Text(
-          workout.title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text('$date | $time'),
-        childrenPadding: const EdgeInsets.symmetric(horizontal: 16),
-        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+            title: Text(
+              workout.title,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text('$date | $time'),
+            childrenPadding: const EdgeInsets.symmetric(horizontal: 16),
+            expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              IconButton(
-                tooltip: 'Reschedule workout',
-                onPressed: onReschedule,
-                icon: const Icon(Icons.edit_calendar_outlined),
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Reschedule workout',
+                    onPressed: onReschedule,
+                    icon: const Icon(Icons.edit_calendar_outlined),
+                  ),
+                  IconButton(
+                    tooltip: 'Workout reminder',
+                    onPressed: onReminder,
+                    icon: Icon(
+                      workout.reminderEnabled
+                          ? Icons.notifications_active_outlined
+                          : Icons.notifications_outlined,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Delete scheduled workout',
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete_outline),
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ],
               ),
-              IconButton(
-                tooltip: 'Workout reminder',
-                onPressed: onReminder,
-                icon: Icon(
-                  workout.reminderEnabled
-                      ? Icons.notifications_active_outlined
-                      : Icons.notifications_outlined,
+              for (final exercise in workout.exercises)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(WorkoutPlan.exerciseName(exercise)),
+                  subtitle: Text(
+                    '${exercise['sets']} sets x ${exercise['durationSeconds'] != null ? '${exercise['durationSeconds']}s' : '${exercise['reps']} reps'} | ${exercise['restSeconds']}s rest',
+                  ),
                 ),
-              ),
-              IconButton(
-                tooltip: 'Delete scheduled workout',
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline),
-                color: Theme.of(context).colorScheme.error,
-              ),
             ],
           ),
-          for (final exercise in workout.exercises)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(WorkoutPlan.exerciseName(exercise)),
-              subtitle: Text(
-                '${exercise['sets']} sets x ${exercise['reps']} reps | ${exercise['restSeconds']}s rest',
-              ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: FilledButton.icon(
+              onPressed: workout.exercises.isEmpty
+                  ? null
+                  : () => _start(context),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Start Workout'),
             ),
+          ),
         ],
       ),
     );

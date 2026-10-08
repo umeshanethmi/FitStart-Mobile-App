@@ -4,7 +4,11 @@ import 'package:fitstart_mobile_app/models/workout_session.dart';
 import 'package:fitstart_mobile_app/screens/exercise_detail_screen.dart';
 
 class DailyWorkoutPlanScreen extends StatefulWidget {
-  const DailyWorkoutPlanScreen({super.key});
+  final TrainingWorkoutPlan plan;
+  const DailyWorkoutPlanScreen({
+    super.key,
+    this.plan = TrainingWorkoutPlan.beginnerSample,
+  });
 
   @override
   State<DailyWorkoutPlanScreen> createState() => _DailyWorkoutPlanScreenState();
@@ -12,7 +16,7 @@ class DailyWorkoutPlanScreen extends StatefulWidget {
 
 class _DailyWorkoutPlanScreenState extends State<DailyWorkoutPlanScreen> {
   static const Color _blue = Color(0xFF2563EB);
-  final TrainingWorkoutPlan _plan = TrainingWorkoutPlan.beginnerSample;
+  TrainingWorkoutPlan get _plan => widget.plan;
   late final WorkoutSession _session;
 
   @override
@@ -52,10 +56,14 @@ class _DailyWorkoutPlanScreenState extends State<DailyWorkoutPlanScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'A simple, balanced session to help you build a routine.',
-                    style: TextStyle(color: Colors.grey.shade700, height: 1.4),
-                  ),
+                  if (_plan == TrainingWorkoutPlan.beginnerSample)
+                    Text(
+                      'A simple, balanced session to help you build a routine.',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        height: 1.4,
+                      ),
+                    ),
                   const SizedBox(height: 18),
                   Wrap(
                     spacing: 8,
@@ -63,7 +71,8 @@ class _DailyWorkoutPlanScreenState extends State<DailyWorkoutPlanScreen> {
                     children: [
                       _WorkoutTag(
                         icon: Icons.schedule_rounded,
-                        label: '${_plan.durationMinutes} min',
+                        label:
+                            '${_plan.durationIsEstimate ? '~' : ''}${_plan.durationMinutes} min',
                       ),
                       _WorkoutTag(
                         icon: Icons.signal_cellular_alt_rounded,
@@ -100,7 +109,9 @@ class _DailyWorkoutPlanScreenState extends State<DailyWorkoutPlanScreen> {
                 width: double.infinity,
                 height: 54,
                 child: FilledButton.icon(
-                  onPressed: () => _openExercise(0),
+                  onPressed: _plan.exercises.isEmpty
+                      ? null
+                      : () => _openExercise(0),
                   icon: const Icon(Icons.play_arrow_rounded),
                   label: const Text(
                     'Start Workout',

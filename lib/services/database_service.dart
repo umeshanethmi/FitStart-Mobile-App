@@ -139,6 +139,7 @@ class DatabaseService {
         'planId': planId,
         'title': plan['title'] ?? 'Workout',
         'exercises': plan['exercises'] ?? [],
+        'preferences': plan['preferences'] ?? {},
         'scheduledAt': Timestamp.fromDate(scheduledAt),
         'createdAt': FieldValue.serverTimestamp(),
       });

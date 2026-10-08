@@ -80,32 +80,33 @@ class ExerciseDetailScreen extends StatelessWidget {
                     value: '${exercise.restSeconds} seconds',
                   ),
                   const SizedBox(height: 18),
-                  Card(
-                    color: const Color(0xFFEFF6FF),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.lightbulb_outline_rounded,
-                            color: Color(0xFF2563EB),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              exercise.beginnerTip,
-                              style: const TextStyle(height: 1.4),
+                  if (exercise.beginnerTip.isNotEmpty)
+                    Card(
+                      color: const Color(0xFFEFF6FF),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.lightbulb_outline_rounded,
+                              color: Color(0xFF2563EB),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                exercise.beginnerTip,
+                                style: const TextStyle(height: 1.4),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -156,10 +157,7 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 145,
-            child: Text(
-              label,
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
+            child: Text(label, style: TextStyle(color: Colors.grey.shade600)),
           ),
           Expanded(
             child: Text(
