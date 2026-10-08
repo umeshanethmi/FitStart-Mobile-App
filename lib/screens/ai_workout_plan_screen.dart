@@ -6,6 +6,7 @@ import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/widgets/edit_plan_exercise_dialog.dart';
 import 'package:fitstart_mobile_app/widgets/delete_workout_plan_dialog.dart';
 import 'package:fitstart_mobile_app/widgets/schedule_workout_dialog.dart';
+import 'package:fitstart_mobile_app/widgets/workout_page.dart';
 
 class AiWorkoutPlanScreen extends StatefulWidget {
   const AiWorkoutPlanScreen({super.key});
@@ -80,8 +81,17 @@ class _AiWorkoutPlanScreenState extends State<AiWorkoutPlanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('My Workout Plans')),
+    return WorkoutPage(
+      title: 'My Workout Plans',
+      actions: [
+        IconButton(
+          tooltip: 'Create Workout Plan',
+          onPressed: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const CreateAiPlanScreen())),
+          icon: const Icon(Icons.add),
+        ),
+      ],
       body: SafeArea(
         child: StreamBuilder<User?>(
           stream: _authChanges,
@@ -158,7 +168,7 @@ class _AiWorkoutPlanScreenState extends State<AiWorkoutPlanScreen> {
                     child: ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: plans.length,
-                      separatorBuilder: (_, _) => const Divider(),
+                      separatorBuilder: (_, _) => const SizedBox(height: 16),
                       itemBuilder: (_, index) => WorkoutPlanDetails(
                         key: ValueKey(plans[index].id),
                         plan: plans[index],
@@ -196,63 +206,107 @@ class WorkoutPlanDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final preferences = plan.preferences;
-    return ExpansionTile(
-      title: Row(
+    return Material(
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: WorkoutPage.line),
+      ),
+      child: ExpansionTile(
+        shape: const Border(),
+        collapsedShape: const Border(),
+        tilePadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                plan.title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Delete plan',
+              color: Theme.of(context).colorScheme.error,
+              icon: const Icon(Icons.delete_outline),
+              onPressed: onDelete,
+            ),
+          ],
+        ),
+        initiallyExpanded: true,
+        subtitle: Text(
+          '${plan.exercises.length} exercises',
+          style: const TextStyle(fontSize: 13, color: WorkoutPage.muted),
+        ),
+        childrenPadding: const EdgeInsets.symmetric(horizontal: 16),
+        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: Text(plan.title)),
-          IconButton(
-            tooltip: 'Delete plan',
-            color: Theme.of(context).colorScheme.error,
-            icon: const Icon(Icons.delete_outline),
-            onPressed: onDelete,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: OutlinedButton.icon(
+                onPressed: onSchedule,
+                icon: const Icon(Icons.event_available_outlined),
+                label: const Text('Schedule Workout'),
+              ),
+            ),
           ),
+          if (preferences.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  if (preferences['goal'] != null)
+                    Text(
+                      '${preferences['goal']}',
+                      style: const TextStyle(
+                        color: WorkoutPage.green,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  if (preferences['experience'] != null)
+                    Text('${preferences['experience']}'),
+                  if (preferences['equipment'] != null)
+                    Text('${preferences['equipment']}'),
+                  if (preferences['daysPerWeek'] != null)
+                    Text('${preferences['daysPerWeek']} days/week'),
+                  if (preferences['durationMinutes'] != null)
+                    Text('${preferences['durationMinutes']} min target'),
+                ],
+              ),
+            ),
+          if (plan.exercises.isEmpty) const Text('No exercises in this plan.'),
+          for (var index = 0; index < plan.exercises.length; index++)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: SizedBox(
+                width: 28,
+                child: Text(
+                  '${index + 1}'.padLeft(2, '0'),
+                  style: const TextStyle(
+                    color: WorkoutPage.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              title: Text(WorkoutPlan.exerciseName(plan.exercises[index])),
+              subtitle: Text(
+                '${plan.exercises[index]['sets']} sets x ${plan.exercises[index]['reps']} reps | ${plan.exercises[index]['restSeconds']}s rest',
+              ),
+              trailing: IconButton(
+                tooltip: 'Edit exercise',
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () => onEdit(index),
+              ),
+            ),
         ],
       ),
-      initiallyExpanded: true,
-      childrenPadding: const EdgeInsets.symmetric(horizontal: 16),
-      expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: OutlinedButton.icon(
-              onPressed: onSchedule,
-              icon: const Icon(Icons.event_available_outlined),
-              label: const Text('Schedule Workout'),
-            ),
-          ),
-        ),
-        if (preferences.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              [
-                preferences['goal'],
-                preferences['experience'],
-                preferences['equipment'],
-                if (preferences['daysPerWeek'] != null)
-                  '${preferences['daysPerWeek']} days/week',
-                if (preferences['durationMinutes'] != null)
-                  '${preferences['durationMinutes']} min target',
-              ].where((value) => value != null).join(' | '),
-            ),
-          ),
-        if (plan.exercises.isEmpty) const Text('No exercises in this plan.'),
-        for (var index = 0; index < plan.exercises.length; index++)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(WorkoutPlan.exerciseName(plan.exercises[index])),
-            subtitle: Text(
-              '${plan.exercises[index]['sets']} sets x ${plan.exercises[index]['reps']} reps | ${plan.exercises[index]['restSeconds']}s rest',
-            ),
-            trailing: IconButton(
-              tooltip: 'Edit exercise',
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => onEdit(index),
-            ),
-          ),
-      ],
     );
   }
 }

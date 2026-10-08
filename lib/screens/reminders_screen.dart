@@ -6,6 +6,7 @@ import 'package:fitstart_mobile_app/screens/workout_schedule_screen.dart';
 import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/services/reminder_notification_service.dart';
 import 'package:fitstart_mobile_app/widgets/workout_reminder_dialog.dart';
+import 'package:fitstart_mobile_app/widgets/workout_page.dart';
 
 class RemindersScreen extends StatefulWidget {
   final String? scheduleId;
@@ -123,8 +124,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reminders')),
+    return WorkoutPage(
+      title: 'Reminders',
       body: SafeArea(
         child: StreamBuilder<User?>(
           stream: _authChanges,
@@ -273,7 +274,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                                   );
                                 }),
                           ),
-                          const Divider(),
+                          const SizedBox(height: 12),
                         ],
                       ],
                     ),
@@ -309,14 +310,42 @@ class WorkoutReminderTile extends StatelessWidget {
         .formatMediumDate(workout.scheduledAt);
     final time = TimeOfDay.fromDateTime(workout.scheduledAt).format(context);
     final reminder = workout.reminderMinutes;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: WorkoutPage.line),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(workout.title, style: Theme.of(context).textTheme.titleMedium),
+          Row(
+            children: [
+              Icon(
+                workout.reminderEnabled
+                    ? Icons.notifications_active_outlined
+                    : Icons.notifications_none_outlined,
+                color: WorkoutPage.green,
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  workout.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 4),
-          Text('$date | $time'),
+          Text(
+            '$date | $time',
+            style: const TextStyle(color: WorkoutPage.muted, fontSize: 13),
+          ),
           const SizedBox(height: 8),
           Text(
             reminder == null

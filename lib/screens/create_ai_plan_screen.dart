@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
 import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/services/workout_plan_generator.dart';
+import 'package:fitstart_mobile_app/widgets/workout_page.dart';
+import 'package:fitstart_mobile_app/screens/ai_workout_plan_screen.dart';
 
 class CreateAiPlanScreen extends StatefulWidget {
   const CreateAiPlanScreen({super.key});
@@ -87,10 +89,7 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
       child: DropdownButtonFormField<T>(
         initialValue: value,
         isExpanded: true,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
+        decoration: InputDecoration(labelText: label),
         items: options
             .map(
               (option) =>
@@ -110,8 +109,34 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
   @override
   Widget build(BuildContext context) {
     final plan = _savedPlan;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Create Workout Plan')),
+    return WorkoutPage(
+      title: 'Create Workout Plan',
+      bottomBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+          child: Align(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 552),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _saving ? null : _generate,
+                  icon: _saving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.fitness_center),
+                  label: Text(_saving ? 'Saving...' : 'Generate Plan'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -124,6 +149,10 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      const WorkoutSectionHeading(
+                        'Make it yours',
+                        icon: Icons.edit_outlined,
+                      ),
                       TextFormField(
                         controller: _nameController,
                         enabled: !_saving,
@@ -132,7 +161,8 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
                         textInputAction: TextInputAction.next,
                         decoration: const InputDecoration(
                           labelText: 'Workout plan name',
-                          border: OutlineInputBorder(),
+                          hintText: 'e.g. Morning Strength',
+                          prefixIcon: Icon(Icons.drive_file_rename_outline),
                         ),
                         validator: (value) {
                           final name = value?.trim() ?? '';
@@ -144,6 +174,10 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
+                      const WorkoutSectionHeading(
+                        'Training preferences',
+                        icon: Icons.fitness_center_outlined,
+                      ),
                       _selection(
                         'Fitness goal',
                         _goal,
@@ -162,14 +196,14 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
                         WorkoutPlanGenerator.equipmentOptions,
                         (value) => _equipment = value,
                       ),
-                      _selection('Days per week', _days, [
+                      _number('Days per week', _days, [
                         1,
                         2,
                         3,
                         4,
                         5,
                       ], (value) => _days = value),
-                      _selection(
+                      _number(
                         'Target session length (minutes)',
                         _duration,
                         WorkoutPlanGenerator.durations,
@@ -184,19 +218,6 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
                         ),
                         const SizedBox(height: 16),
                       ],
-                      FilledButton.icon(
-                        onPressed: _saving ? null : _generate,
-                        icon: _saving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.fitness_center),
-                        label: Text(_saving ? 'Saving...' : 'Generate Plan'),
-                      ),
                     ],
                   ),
                 ),
@@ -211,6 +232,16 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Saved - ${(plan['preferences'] as Map)['daysPerWeek']} days per week',
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AiWorkoutPlanScreen(),
+                      ),
+                    ),
+                    icon: const Icon(Icons.list_alt_outlined),
+                    label: const Text('My Workout Plans'),
                   ),
                   const SizedBox(height: 16),
                   for (final exercise in plan['exercises'] as List)
@@ -227,6 +258,64 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _number(
+    String label,
+    int value,
+    List<int> options,
+    ValueChanged<int> onChanged,
+  ) {
+    final index = options.indexOf(value);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14, color: WorkoutPage.muted),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: WorkoutPage.line),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: 'Decrease $label',
+                  onPressed: _saving || index == 0
+                      ? null
+                      : () => setState(() => onChanged(options[index - 1])),
+                  icon: const Icon(Icons.remove),
+                ),
+                Expanded(
+                  child: Text(
+                    '$value',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Increase $label',
+                  onPressed: _saving || index == options.length - 1
+                      ? null
+                      : () => setState(() => onChanged(options[index + 1])),
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

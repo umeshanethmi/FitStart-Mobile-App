@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:fitstart_mobile_app/widgets/workout_page.dart';
 import 'package:flutter/services.dart';
 import 'package:fitstart_mobile_app/models/workout_plan.dart';
 
@@ -96,50 +97,53 @@ class _EditPlanExerciseDialogState extends State<EditPlanExerciseDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_saving,
-      child: AlertDialog(
-        scrollable: true,
-        title: Text(WorkoutPlan.exerciseName(widget.exercise)),
-        content: SizedBox(
-          width: 360,
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _field('Sets', _sets, 1, 10),
-                _field('Repetitions', _reps, 1, 200),
-                _field('Rest (seconds)', _rest, 0, 600),
-                if (_error != null)
-                  Text(
-                    _error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+    return Theme(
+      data: WorkoutPage.theme(context),
+      child: PopScope(
+        canPop: !_saving,
+        child: AlertDialog(
+          scrollable: true,
+          title: Text(WorkoutPlan.exerciseName(widget.exercise)),
+          content: SizedBox(
+            width: 360,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _field('Sets', _sets, 1, 10),
+                  _field('Repetitions', _reps, 1, 200),
+                  _field('Rest (seconds)', _rest, 0, 600),
+                  if (_error != null)
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: _saving ? null : () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: Text(_saving ? 'Saving...' : 'Save'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: _saving ? null : () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.save_outlined),
-            label: Text(_saving ? 'Saving...' : 'Save'),
-          ),
-        ],
       ),
     );
   }

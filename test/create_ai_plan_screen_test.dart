@@ -14,7 +14,13 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: CreateAiPlanScreen()));
       await tester.enterText(find.byType(TextFormField), 'My Morning Workout');
       expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(3));
-      expect(find.byType(DropdownButtonFormField<int>), findsNWidgets(2));
+      await tester.ensureVisible(find.byTooltip('Increase Days per week'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Increase Days per week'));
+      await tester.pumpAndSettle();
+      expect(find.text('4'), findsOneWidget);
+      await tester.ensureVisible(find.text('Stay Fit').first);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Stay Fit').first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Build Muscle').last);
@@ -31,6 +37,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: CreateAiPlanScreen()));
     await tester.enterText(find.byType(TextFormField), '   ');
     await tester.ensureVisible(find.text('Generate Plan'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Generate Plan'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Enter a workout plan name.'));

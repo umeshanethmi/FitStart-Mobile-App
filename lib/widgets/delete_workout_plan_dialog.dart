@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:fitstart_mobile_app/widgets/workout_page.dart';
 
 class DeleteWorkoutPlanDialog extends StatefulWidget {
   final String title;
@@ -48,56 +49,59 @@ class _DeleteWorkoutPlanDialogState extends State<DeleteWorkoutPlanDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_deleting,
-      child: AlertDialog(
-        scrollable: true,
-        title: Text(
-          widget.scheduledWorkout
-              ? 'Delete scheduled workout?'
-              : 'Delete workout plan?',
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.scheduledWorkout
-                  ? 'Remove "${widget.title}" from your schedule? Your saved plan will be kept.'
-                  : 'Delete "${widget.title}" and all its exercises? This cannot be undone.',
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 16),
+    return Theme(
+      data: WorkoutPage.theme(context),
+      child: PopScope(
+        canPop: !_deleting,
+        child: AlertDialog(
+          scrollable: true,
+          title: Text(
+            widget.scheduledWorkout
+                ? 'Delete scheduled workout?'
+                : 'Delete workout plan?',
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                widget.scheduledWorkout
+                    ? 'Remove "${widget.title}" from your schedule? Your saved plan will be kept.'
+                    : 'Delete "${widget.title}" and all its exercises? This cannot be undone.',
               ),
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
             ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: _deleting
+                  ? null
+                  : () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: _deleting ? null : _delete,
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+              icon: _deleting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.delete_outline),
+              label: Text(_deleting ? 'Deleting...' : 'Delete'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: _deleting
-                ? null
-                : () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton.icon(
-            onPressed: _deleting ? null : _delete,
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            icon: _deleting
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.delete_outline),
-            label: Text(_deleting ? 'Deleting...' : 'Delete'),
-          ),
-        ],
       ),
     );
   }

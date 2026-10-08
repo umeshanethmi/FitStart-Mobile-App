@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fitstart_mobile_app/widgets/workout_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 class ScheduleWorkoutDialog extends StatefulWidget {
@@ -119,61 +120,70 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
   @override
   Widget build(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
-    return PopScope(
-      canPop: !_saving,
-      child: AlertDialog(
-        scrollable: true,
-        title: Text(
-          widget.initialDate == null
-              ? 'Schedule Workout'
-              : 'Reschedule Workout',
-        ),
-        content: SizedBox(
-          width: 360,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(widget.title),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: _saving ? null : _pickDate,
-                icon: const Icon(Icons.calendar_today_outlined),
-                label: Text(localizations.formatMediumDate(_selected)),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _saving ? null : _pickTime,
-                icon: const Icon(Icons.schedule),
-                label: Text(TimeOfDay.fromDateTime(_selected).format(context)),
-              ),
-              if (_error != null) ...[
+    return Theme(
+      data: WorkoutPage.theme(context),
+      child: PopScope(
+        canPop: !_saving,
+        child: AlertDialog(
+          scrollable: true,
+          title: Text(
+            widget.initialDate == null
+                ? 'Schedule Workout'
+                : 'Reschedule Workout',
+          ),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(widget.title),
                 const SizedBox(height: 16),
-                Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                OutlinedButton.icon(
+                  onPressed: _saving ? null : _pickDate,
+                  icon: const Icon(Icons.calendar_today_outlined),
+                  label: Text(localizations.formatMediumDate(_selected)),
                 ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _saving ? null : _pickTime,
+                  icon: const Icon(Icons.schedule),
+                  label: Text(
+                    TimeOfDay.fromDateTime(_selected).format(context),
+                  ),
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: _saving
+                  ? null
+                  : () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: _saving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: Text(_saving ? 'Saving...' : 'Save'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: _saving ? null : () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton.icon(
-            onPressed: _saving ? null : _save,
-            icon: _saving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.save_outlined),
-            label: Text(_saving ? 'Saving...' : 'Save'),
-          ),
-        ],
       ),
     );
   }
