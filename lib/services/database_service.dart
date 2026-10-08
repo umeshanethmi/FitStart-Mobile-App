@@ -1,12 +1,75 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fitstart_mobile_app/models/progress_data.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  String get _uid {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('You must be signed in to access workouts.');
+    }
+    return user.uid;
+  }
+
+  CollectionReference<Map<String, dynamic>> get _workoutPlans {
+    return _db.collection('workout_plans');
+  }
+
+  Stream<List<WorkoutSession>> watchWorkouts() async* {
+    final uid = _uid;
+    final userPlans = _workoutPlans.where('userId', isEqualTo: uid);
+    await for (final snapshot in userPlans.snapshots()) {
+      final records =
+          snapshot.docs.map((document) {
+            final data = document.data();
+            for (final dateField in [
+              'startedAt',
+              'weekStart',
+              'completedAt',
+              'createdAt',
+              'updatedAt',
+            ]) {
+              final dateValue = data[dateField];
+              if (dateValue is Timestamp) {
+                data[dateField] = dateValue.toDate();
+              }
+            }
+            return WorkoutSession.fromMap(document.id, data);
+          }).toList()..sort((first, second) {
+            final firstDate =
+                first.completedAt ??
+                first.startedAt ??
+                first.createdAt ??
+                first.weekStart;
+            final secondDate =
+                second.completedAt ??
+                second.startedAt ??
+                second.createdAt ??
+                second.weekStart;
+            if (firstDate != null && secondDate != null) {
+              final chronology = secondDate.compareTo(firstDate);
+              if (chronology != 0) return chronology;
+            }
+            final dayOrder = second.dayIndex.compareTo(first.dayIndex);
+            return dayOrder != 0 ? dayOrder : first.name.compareTo(second.name);
+          });
+      yield records;
+    }
+  }
 
   // 1. Create or Update a User Profile (Called after Registration)
-  Future<void> createUserProfile(String uid, Map<String, dynamic> profileData) async {
+  Future<void> createUserProfile(
+    String uid,
+    Map<String, dynamic> profileData,
+  ) async {
     try {
-      await _db.collection('users').doc(uid).set(profileData, SetOptions(merge: true));
+      await _db
+          .collection('users')
+          .doc(uid)
+          .set(profileData, SetOptions(merge: true));
     } catch (e) {
       print("Error creating user profile: $e");
       rethrow;
@@ -37,7 +100,12 @@ class DatabaseService {
       // Stay Fit
       selectedExercises = [
         {"exerciseId": "pushups", "sets": 3, "reps": 15, "restSeconds": 60},
-        {"exerciseId": "plank", "sets": 3, "reps": 1, "restSeconds": 60}, // reps = minutes
+        {
+          "exerciseId": "plank",
+          "sets": 3,
+          "reps": 1,
+          "restSeconds": 60,
+        }, // reps = minutes
       ];
     }
 
@@ -49,6 +117,6 @@ class DatabaseService {
       "createdAt": FieldValue.serverTimestamp(),
     };
 
-    await _db.collection('workout_plans').add(newPlan);
+    await _workoutPlans.add(newPlan);
   }
 }

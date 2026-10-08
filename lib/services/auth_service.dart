@@ -6,7 +6,11 @@ class AuthService {
 
   UserModel? _userFromFirebaseUser(User? user, {String name = ""}) {
     return user != null
-        ? UserModel(id: user.uid, name: name.isNotEmpty ? name : user.displayName ?? "User", email: user.email ?? "")
+        ? UserModel(
+            id: user.uid,
+            name: name.isNotEmpty ? name : user.displayName ?? "User",
+            email: user.email ?? "",
+          )
         : null;
   }
 
@@ -15,20 +19,24 @@ class AuthService {
   }
 
   // Register function using Firebase
-  Future<UserModel?> registerWithEmailAndPassword(String name, String email, String password) async {
+  Future<UserModel?> registerWithEmailAndPassword(
+    String name,
+    String email,
+    String password,
+  ) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       User? user = result.user;
-      
+
       // Update the display name
       if (user != null) {
         await user.updateDisplayName(name);
         await user.reload();
       }
-      
+
       return _userFromFirebaseUser(user, name: name);
     } catch (e) {
       print("Error in registerWithEmailAndPassword: $e");
@@ -37,7 +45,10 @@ class AuthService {
   }
 
   // Login function using Firebase
-  Future<UserModel?> signInWithEmailAndPassword(String email, String password) async {
+  Future<UserModel?> signInWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -53,10 +64,6 @@ class AuthService {
 
   // Sign out using Firebase
   Future<void> signOut() async {
-    try {
-      await _auth.signOut();
-    } catch (e) {
-      print("Error in signOut: $e");
-    }
+    await _auth.signOut();
   }
 }
