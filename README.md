@@ -1,17 +1,23 @@
-# fitstart_mobile_app
+# 🏋️ FitStart - Beginner Fitness & Home Workout Mobile App
 
-A new Flutter project.
+Welcome to the official repository for **FitStart**, developed as part of the **IT3060 Human-Computer Interaction (HCI) Group Project**. 
 
-## Getting Started
+FitStart is a mobile application designed specifically for fitness beginners to seamlessly perform home workouts, track daily progress, and stay motivated through structured guidance and AI-powered recommendations.
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## 📱 Project Overview
+* **Project Name:** FitStart
+* **Domain:** Health & Fitness / Mobile Application
+* **Module:** IT3060 - HCI 
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 👥 Group Members
+* **Nethmi P.P.U.** 
+* **Y.K.M.V.S.** 
+* **Abeyrathna Bandara** 
+* **Matheews Janoshan H.B.K.D. Bandara** 
+
+---
+© 2026 FitStart Team. All rights reserved.
