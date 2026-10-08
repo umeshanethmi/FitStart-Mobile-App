@@ -11,6 +11,8 @@ import 'package:fitstart_mobile_app/screens/ai_workout_plan_screen.dart';
 import 'package:fitstart_mobile_app/screens/workout_schedule_screen.dart';
 import 'package:fitstart_mobile_app/screens/reminders_screen.dart';
 import 'package:fitstart_mobile_app/widgets/workout_page.dart';
+import 'package:fitstart_mobile_app/screens/daily_workout_plan_screen.dart';
+import 'package:fitstart_mobile_app/models/training_workout_plan.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -89,6 +91,14 @@ class HomeScreen extends StatelessWidget {
               const WorkoutSectionHeading(
                 'Workout hub',
                 icon: Icons.fitness_center_outlined,
+              ),
+              _destination(
+                context,
+                'Start Workout',
+                '${TrainingWorkoutPlan.beginnerSample.name} | ${TrainingWorkoutPlan.beginnerSample.durationMinutes} min',
+                Icons.play_circle_outline,
+                WorkoutPage.green,
+                const DailyWorkoutPlanScreen(),
               ),
               _destination(
                 context,
