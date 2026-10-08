@@ -98,7 +98,7 @@ class _EditPlanExerciseDialogState extends State<EditPlanExerciseDialog> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: WorkoutPage.theme(context),
+      data: WorkoutPage.theme(context, planningStyle: true),
       child: PopScope(
         canPop: !_saving,
         child: AlertDialog(

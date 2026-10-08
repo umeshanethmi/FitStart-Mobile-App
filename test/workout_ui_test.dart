@@ -17,6 +17,27 @@ const _exercises = [
 ];
 
 void main() {
+  testWidgets('Planning colors are scoped and leave Home styling unchanged', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: HomeScreen()));
+    await tester.pumpAndSettle();
+    expect(
+      Theme.of(tester.element(find.byType(ListView))).colorScheme.primary,
+      WorkoutPage.green,
+    );
+    await tester.pumpWidget(const MaterialApp(home: CreateAiPlanScreen()));
+    await tester.pumpAndSettle();
+    final theme = Theme.of(tester.element(find.byType(ListView)));
+    expect(theme.colorScheme.primary, WorkoutPage.blue);
+    expect(theme.scaffoldBackgroundColor, const Color(0xFFF6F8FD));
+    expect(
+      theme.inputDecorationTheme.focusedBorder?.borderSide.color,
+      WorkoutPage.blue,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   for (final size in [
     const Size(320, 640),
     const Size(390, 844),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
 import 'package:fitstart_mobile_app/services/database_service.dart';
-import 'package:fitstart_mobile_app/screens/home_screen.dart';
+import 'package:fitstart_mobile_app/screens/main_navigation_screen.dart';
 import 'package:fitstart_mobile_app/screens/register_screen.dart';
 import 'package:fitstart_mobile_app/screens/trainer_dashboard_screen.dart';
 import 'package:fitstart_mobile_app/screens/therapist_dashboard_screen.dart';
@@ -293,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
         (route) => false,
       );
     }

@@ -83,6 +83,7 @@ class _AiWorkoutPlanScreenState extends State<AiWorkoutPlanScreen> {
   Widget build(BuildContext context) {
     return WorkoutPage(
       title: 'My Workout Plans',
+      planningStyle: true,
       actions: [
         IconButton(
           tooltip: 'Create Workout Plan',
@@ -211,7 +212,7 @@ class WorkoutPlanDetails extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: WorkoutPage.line),
+        side: const BorderSide(color: WorkoutPage.planningLine),
       ),
       child: ExpansionTile(
         shape: const Border(),
@@ -266,7 +267,7 @@ class WorkoutPlanDetails extends StatelessWidget {
                     Text(
                       '${preferences['goal']}',
                       style: const TextStyle(
-                        color: WorkoutPage.green,
+                        color: WorkoutPage.blue,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

@@ -55,6 +55,10 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
           : _selected,
       firstDate: first,
       lastDate: last,
+      builder: (context, child) => Theme(
+        data: WorkoutPage.theme(context, planningStyle: true),
+        child: child!,
+      ),
     );
     if (date != null && mounted) {
       setState(
@@ -73,6 +77,10 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_selected),
+      builder: (context, child) => Theme(
+        data: WorkoutPage.theme(context, planningStyle: true),
+        child: child!,
+      ),
     );
     if (time != null && mounted) {
       setState(
@@ -121,7 +129,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
   Widget build(BuildContext context) {
     final localizations = MaterialLocalizations.of(context);
     return Theme(
-      data: WorkoutPage.theme(context),
+      data: WorkoutPage.theme(context, planningStyle: true),
       child: PopScope(
         canPop: !_saving,
         child: AlertDialog(

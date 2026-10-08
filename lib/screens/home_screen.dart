@@ -13,18 +13,28 @@ import 'package:fitstart_mobile_app/screens/reminders_screen.dart';
 import 'package:fitstart_mobile_app/widgets/workout_page.dart';
 import 'package:fitstart_mobile_app/screens/daily_workout_plan_screen.dart';
 import 'package:fitstart_mobile_app/models/training_workout_plan.dart';
+import 'package:fitstart_mobile_app/widgets/workout_navigation_scope.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  void _open(BuildContext context, Widget screen) =>
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  void _open(BuildContext context, Widget screen) {
+    final tab = switch (screen) {
+      WorkoutScheduleScreen() => WorkoutTab.schedule,
+      RemindersScreen() => WorkoutTab.reminders,
+      ProgressAnalyticsScreen() => WorkoutTab.progress,
+      ExpertSupportScreen() => WorkoutTab.support,
+      _ => null,
+    };
+    if (tab != null && WorkoutNavigationScope.select(context, tab)) return;
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
 
   Future<void> _logout(BuildContext context) async {
     try {
       await AuthService().signOut();
       if (!context.mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
         (_) => false,
       );
@@ -41,19 +51,63 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => WorkoutPage(
     title: 'FitStart',
-    actions: [
-      IconButton(
-        tooltip: 'Settings & Privacy',
-        icon: const Icon(Icons.settings_outlined),
-        onPressed: () => _open(context, const SettingsPrivacyScreen()),
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      toolbarHeight: 68,
+      leadingWidth: 72,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 20, right: 12),
+        child: Center(
+          child: Tooltip(
+            message: 'FitStart logo',
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.bolt_rounded,
+                color: Color(0xFF00E676),
+                size: 28,
+                semanticLabel: 'FitStart logo',
+              ),
+            ),
+          ),
+        ),
       ),
-      IconButton(
-        tooltip: 'Log out',
-        icon: const Icon(Icons.logout_outlined),
-        onPressed: () => _logout(context),
+      titleSpacing: 0,
+      title: const FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: 'Fit'),
+              TextSpan(
+                text: 'Start',
+                style: TextStyle(color: WorkoutPage.green),
+              ),
+            ],
+          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+        ),
       ),
-      const SizedBox(width: 8),
-    ],
+      shape: const Border(bottom: BorderSide(color: WorkoutPage.line)),
+      actions: [
+        IconButton(
+          tooltip: 'Settings & Privacy',
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () => _open(context, const SettingsPrivacyScreen()),
+        ),
+        IconButton(
+          tooltip: 'Log out',
+          icon: const Icon(Icons.logout_outlined),
+          onPressed: () => _logout(context),
+        ),
+        const SizedBox(width: 8),
+      ],
+    ),
     body: SafeArea(
       child: Align(
         alignment: Alignment.topCenter,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fitstart_mobile_app/screens/home_screen.dart';
+import 'package:fitstart_mobile_app/screens/main_navigation_screen.dart';
 import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
 
@@ -72,7 +72,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
 
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
             (route) => false,
           );
         }

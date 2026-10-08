@@ -50,7 +50,7 @@ class _DeleteWorkoutPlanDialogState extends State<DeleteWorkoutPlanDialog> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: WorkoutPage.theme(context),
+      data: WorkoutPage.theme(context, planningStyle: true),
       child: PopScope(
         canPop: !_deleting,
         child: AlertDialog(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fitstart_mobile_app/models/workout_session.dart';
-import 'package:fitstart_mobile_app/screens/home_screen.dart';
+import 'package:fitstart_mobile_app/screens/main_navigation_screen.dart';
 
 class WorkoutSummaryScreen extends StatelessWidget {
   final WorkoutSession session;
@@ -93,8 +93,10 @@ class WorkoutSummaryScreen extends StatelessWidget {
               height: 54,
               child: FilledButton(
                 onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => const MainNavigationScreen(),
+                    ),
                     (route) => false,
                   );
                 },

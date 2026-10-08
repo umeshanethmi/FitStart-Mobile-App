@@ -40,9 +40,10 @@ class _WorkoutScheduleScreenState extends State<WorkoutScheduleScreen> {
     return 'A saved workout could not be loaded. Please check its saved date, time, and plan details.';
   }
 
-  void _openPlans() =>
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const AiWorkoutPlanScreen()));
+  void _openPlans() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const AiWorkoutPlanScreen()));
+  }
 
   Future<void> _reschedule(String uid, ScheduledWorkout workout) async {
     final saved = await showDialog<bool>(
@@ -86,6 +87,7 @@ class _WorkoutScheduleScreenState extends State<WorkoutScheduleScreen> {
   Widget build(BuildContext context) {
     return WorkoutPage(
       title: 'Workout Schedule',
+      planningStyle: true,
       actions: [
         IconButton(
           tooltip: 'Schedule a workout',
@@ -226,7 +228,7 @@ class ScheduledWorkoutDetails extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: WorkoutPage.line),
+        side: const BorderSide(color: WorkoutPage.planningLine),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -249,7 +251,7 @@ class ScheduledWorkoutDetails extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
-                      color: WorkoutPage.green,
+                      color: WorkoutPage.blue,
                     ),
                   ),
                 ),

@@ -7,6 +7,7 @@ import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/services/reminder_notification_service.dart';
 import 'package:fitstart_mobile_app/widgets/workout_reminder_dialog.dart';
 import 'package:fitstart_mobile_app/widgets/workout_page.dart';
+import 'package:fitstart_mobile_app/widgets/workout_navigation_scope.dart';
 
 class RemindersScreen extends StatefulWidget {
   final String? scheduleId;
@@ -126,6 +127,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
   Widget build(BuildContext context) {
     return WorkoutPage(
       title: 'Reminders',
+      planningStyle: true,
       body: SafeArea(
         child: StreamBuilder<User?>(
           stream: _authChanges,
@@ -194,11 +196,19 @@ class _RemindersScreenState extends State<RemindersScreen> {
                         const Text('No scheduled workouts.'),
                         const SizedBox(height: 16),
                         FilledButton.icon(
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const WorkoutScheduleScreen(),
-                            ),
-                          ),
+                          onPressed: () {
+                            if (WorkoutNavigationScope.select(
+                              context,
+                              WorkoutTab.schedule,
+                            )) {
+                              return;
+                            }
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const WorkoutScheduleScreen(),
+                              ),
+                            );
+                          },
                           icon: const Icon(Icons.calendar_month),
                           label: const Text('Workout Schedule'),
                         ),
@@ -314,7 +324,7 @@ class WorkoutReminderTile extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: WorkoutPage.line),
+        border: Border.all(color: WorkoutPage.planningLine),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -326,7 +336,9 @@ class WorkoutReminderTile extends StatelessWidget {
                 workout.reminderEnabled
                     ? Icons.notifications_active_outlined
                     : Icons.notifications_none_outlined,
-                color: WorkoutPage.green,
+                color: workout.reminderEnabled
+                    ? WorkoutPage.amber
+                    : WorkoutPage.muted,
                 size: 22,
               ),
               const SizedBox(width: 10),

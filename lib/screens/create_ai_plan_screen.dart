@@ -111,6 +111,7 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
     final plan = _savedPlan;
     return WorkoutPage(
       title: 'Create Workout Plan',
+      planningStyle: true,
       bottomBar: SafeArea(
         top: false,
         child: Padding(
@@ -235,11 +236,13 @@ class _CreateAiPlanScreenState extends State<CreateAiPlanScreen> {
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const AiWorkoutPlanScreen(),
-                      ),
-                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AiWorkoutPlanScreen(),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.list_alt_outlined),
                     label: const Text('My Workout Plans'),
                   ),
