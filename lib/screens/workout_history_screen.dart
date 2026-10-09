@@ -29,7 +29,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
     return ProgressDataView(
       builder: (context, workouts) {
         final metrics = ProgressMetrics(workouts);
-        final filteredWorkouts = _filteredWorkouts(workouts);
+        final filteredWorkouts = _filteredWorkouts(metrics.workouts);
         return Scaffold(
           backgroundColor: const Color(0xFFF6F8FD),
           appBar: AppBar(
@@ -77,7 +77,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
           child: _summaryCard(
             icon: Icons.fitness_center_rounded,
             label: 'Workouts',
-            value: '${metrics.totalWorkoutCount}',
+            value: '${metrics.historyCompletedCount}',
             color: const Color(0xFF2563EB),
           ),
         ),
@@ -86,7 +86,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
           child: _summaryCard(
             icon: Icons.timer_outlined,
             label: 'Duration',
-            value: '${metrics.historyDurationMinutes}m',
+            value: ProgressData.durationLabel(metrics.historyDurationSeconds),
             color: const Color(0xFF7C3AED),
           ),
         ),
@@ -216,7 +216,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            workout.date,
+                            workout.displayDate,
                             style: TextStyle(
                               color: Colors.grey.shade500,
                               fontSize: 12,
@@ -241,7 +241,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                     _workoutFact(
                       Icons.timer_outlined,
                       workout.isCompleted
-                          ? '${workout.durationMinutes} min'
+                          ? ProgressData.durationLabel(workout.durationSeconds)
                           : '—',
                     ),
                     const SizedBox(width: 20),

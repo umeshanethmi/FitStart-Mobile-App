@@ -14,12 +14,12 @@ class ActivityDetailsScreen extends StatelessWidget {
     return ProgressDataView(
       builder: (context, workouts) {
         final metrics = ProgressMetrics(workouts);
-        final previous = metrics.previousWeekActiveMinutes;
-        final difference = metrics.totalDurationMinutes - previous;
+        final previous = metrics.previousWeekActiveSeconds;
+        final difference = metrics.totalDurationSeconds - previous;
         final percent = previous == 0
             ? 0
             : (difference * 100 / previous).round();
-        final total = metrics.totalDurationMinutes + previous;
+        final total = metrics.totalDurationSeconds + previous;
         return Scaffold(
           backgroundColor: const Color(0xFFF6F8FD),
           appBar: AppBar(
@@ -59,7 +59,7 @@ class ActivityDetailsScreen extends StatelessWidget {
                   Expanded(
                     child: _statCard(
                       'Total active time',
-                      _duration(metrics.totalDurationMinutes),
+                      _duration(metrics.totalDurationSeconds),
                       'this week',
                       Icons.timer_outlined,
                     ),
@@ -131,7 +131,7 @@ class ActivityDetailsScreen extends StatelessWidget {
     int total,
   ) {
     final isIncrease = difference >= 0;
-    final progress = total == 0 ? 0.0 : metrics.totalDurationMinutes / total;
+    final progress = total == 0 ? 0.0 : metrics.totalDurationSeconds / total;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: _cardDecoration(),
@@ -150,11 +150,8 @@ class ActivityDetailsScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _comparisonValue('This week', metrics.totalDurationMinutes),
-              _comparisonValue(
-                metrics.hasPreviousWeekData ? 'Last week' : 'Sample last week',
-                metrics.previousWeekActiveMinutes,
-              ),
+              _comparisonValue('This week', metrics.totalDurationSeconds),
+              _comparisonValue('Last week', metrics.previousWeekActiveSeconds),
             ],
           ),
           const SizedBox(height: 14),
@@ -179,7 +176,8 @@ class ActivityDetailsScreen extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                '${isIncrease ? '+' : ''}$difference min ($changePercent%) from last week',
+                '${isIncrease ? '+' : '-'}${_duration(difference.abs())} '
+                '($changePercent%) from last week',
                 style: TextStyle(
                   color: isIncrease
                       ? const Color(0xFF15803D)
@@ -192,7 +190,7 @@ class ActivityDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'Average workout duration: ${metrics.averageWorkoutMinutes} min',
+            'Average workout duration: ${_duration(metrics.completedCount == 0 ? 0 : (metrics.totalDurationSeconds / metrics.completedCount).round())}',
             style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
           ),
         ],
@@ -200,7 +198,7 @@ class ActivityDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _comparisonValue(String label, int minutes) {
+  Widget _comparisonValue(String label, int seconds) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -210,7 +208,7 @@ class ActivityDetailsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          _duration(minutes),
+          _duration(seconds),
           style: const TextStyle(
             color: _navy,
             fontSize: 16,
@@ -255,7 +253,8 @@ class ActivityDetailsScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${workout.date} · ${workout.durationMinutes} min',
+                        '${workout.displayDate} · '
+                        '${_duration(workout.durationSeconds)}',
                         style: TextStyle(
                           color: Colors.grey.shade500,
                           fontSize: 11,
@@ -282,7 +281,7 @@ class ActivityDetailsScreen extends StatelessWidget {
     );
   }
 
-  String _duration(int minutes) => '${minutes ~/ 60}h ${minutes % 60}m';
+  String _duration(int seconds) => ProgressData.durationLabel(seconds);
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(

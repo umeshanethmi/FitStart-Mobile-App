@@ -18,20 +18,11 @@ class ProgressAnalyticsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProgressDataView(
       builder: (context, workouts) {
-        final isDemoData = workouts.isEmpty;
-        final dashboardWorkouts = isDemoData
-            ? ProgressData.sampleWorkouts
-            : workouts;
-        final metrics = ProgressMetrics(dashboardWorkouts);
-        final recentWorkouts = dashboardWorkouts
-            .where((workout) => !workout.isCancelled)
-            .take(3)
-            .toList();
+        final metrics = ProgressMetrics(workouts);
+        final recentWorkouts = metrics.historyCompleted.take(3).toList();
         final activeDifference =
-            metrics.totalDurationMinutes - metrics.previousWeekActiveMinutes;
-        final comparisonLabel = isDemoData
-            ? 'preview baseline'
-            : metrics.hasPreviousWeekData
+            metrics.totalDurationSeconds - metrics.previousWeekActiveSeconds;
+        final comparisonLabel = metrics.hasPreviousWeekData
             ? 'last week'
             : 'baseline';
         return Scaffold(
@@ -77,7 +68,6 @@ class ProgressAnalyticsScreen extends StatelessWidget {
                   height: 1.4,
                 ),
               ),
-              if (isDemoData) ...[const SizedBox(height: 10), _demoDataLabel()],
               const SizedBox(height: 20),
               _overallProgressCard(context, metrics),
               const SizedBox(height: 20),
@@ -98,10 +88,10 @@ class ProgressAnalyticsScreen extends StatelessWidget {
                     child: _summaryCard(
                       icon: Icons.timer_outlined,
                       label: 'Active time',
-                      value: _duration(metrics.totalDurationMinutes),
+                      value: _duration(metrics.totalDurationSeconds),
                       detail:
-                          '${activeDifference >= 0 ? '+' : ''}'
-                          '$activeDifference min vs $comparisonLabel',
+                          '${activeDifference >= 0 ? '+' : '-'}'
+                          '${_duration(activeDifference.abs())} vs $comparisonLabel',
                       color: const Color(0xFF7C3AED),
                     ),
                   ),
@@ -119,7 +109,9 @@ class ProgressAnalyticsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              _weeklyChart(metrics, isDemoData: isDemoData),
+              _weeklyChart(metrics),
+              const SizedBox(height: 12),
+              _monthlySummary(metrics),
               const SizedBox(height: 22),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -382,6 +374,11 @@ class ProgressAnalyticsScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          Text(
+            'Estimated using ${ProgressData.estimatedCaloriesPerMinute} kcal per workout minute.',
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+          ),
+          const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
@@ -397,17 +394,15 @@ class ProgressAnalyticsScreen extends StatelessWidget {
     );
   }
 
-  Widget _weeklyChart(ProgressMetrics metrics, {required bool isDemoData}) {
-    final maxMinutes = metrics.dailyActiveMinutes.fold<int>(
+  Widget _weeklyChart(ProgressMetrics metrics) {
+    final maxSeconds = metrics.dailyActiveSeconds.fold<int>(
       0,
       (max, value) => value > max ? value : max,
     );
     final mostActiveDay = metrics.mostActiveDayIndex;
-    final difference =
-        metrics.totalDurationMinutes - metrics.previousWeekActiveMinutes;
-    final comparisonLabel = isDemoData
-        ? 'preview baseline'
-        : metrics.hasPreviousWeekData
+    final differenceSeconds =
+        metrics.totalDurationSeconds - metrics.previousWeekActiveSeconds;
+    final comparisonLabel = metrics.hasPreviousWeekData
         ? 'last week'
         : 'baseline';
 
@@ -418,7 +413,7 @@ class ProgressAnalyticsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _duration(metrics.totalDurationMinutes),
+            _duration(metrics.totalDurationSeconds),
             style: const TextStyle(
               color: _navy,
               fontSize: 22,
@@ -427,9 +422,10 @@ class ProgressAnalyticsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${difference >= 0 ? '+' : ''}$difference min vs $comparisonLabel',
+            '${differenceSeconds >= 0 ? '+' : '-'}'
+            '${_duration(differenceSeconds.abs())} vs $comparisonLabel',
             style: TextStyle(
-              color: difference >= 0
+              color: differenceSeconds >= 0
                   ? const Color(0xFF15803D)
                   : Colors.redAccent,
               fontSize: 11,
@@ -442,8 +438,8 @@ class ProgressAnalyticsScreen extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: List.generate(7, (index) {
-                final minutes = metrics.dailyActiveMinutes[index];
-                final isMostActive = maxMinutes > 0 && index == mostActiveDay;
+                final seconds = metrics.dailyActiveSeconds[index];
+                final isMostActive = maxSeconds > 0 && index == mostActiveDay;
                 return Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -466,9 +462,9 @@ class ProgressAnalyticsScreen extends StatelessWidget {
                           child: Align(
                             alignment: Alignment.bottomCenter,
                             child: FractionallySizedBox(
-                              heightFactor: maxMinutes == 0
+                              heightFactor: maxSeconds == 0
                                   ? 0
-                                  : minutes / maxMinutes,
+                                  : seconds / maxSeconds,
                               child: Container(
                                 width: 18,
                                 decoration: BoxDecoration(
@@ -501,13 +497,72 @@ class ProgressAnalyticsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            maxMinutes == 0
+            maxSeconds == 0
                 ? 'Complete a workout to see your most active day.'
-                : 'Most active: ${ProgressData.dayLabels[mostActiveDay]} · $maxMinutes minutes',
+                : 'Most active: ${ProgressData.dayLabels[mostActiveDay]} · '
+                      '${_duration(maxSeconds)}',
             style: const TextStyle(
               color: _blue,
               fontSize: 11,
               fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _monthlySummary(ProgressMetrics metrics) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'This month',
+            style: TextStyle(
+              color: _navy,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _monthlyMetric('Workouts', '${metrics.monthlyCompletedCount}'),
+              _monthlyMetric(
+                'Active time',
+                _duration(metrics.monthlyDurationSeconds),
+              ),
+              _monthlyMetric('Calories', '${metrics.monthlyCalories} kcal'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _monthlyMetric(String label, String value) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
+          ),
+          const SizedBox(height: 5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: _navy,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],
@@ -539,7 +594,8 @@ class ProgressAnalyticsScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${workout.date} · ${workout.isCompleted ? '${workout.durationMinutes} min' : workout.status.name}',
+                    '${workout.displayDate} · '
+                    '${_duration(workout.durationSeconds)}',
                     style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
                   ),
                 ],
@@ -562,7 +618,7 @@ class ProgressAnalyticsScreen extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'No workout history yet. Completed and planned workouts will appear here.',
+              'No completed workouts yet. Your saved sessions will appear here.',
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontSize: 13,
@@ -571,27 +627,6 @@ class ProgressAnalyticsScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _demoDataLabel() {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEAF1FF),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Text(
-          'Demo data · replaced when your workouts are available',
-          style: TextStyle(
-            color: _blue,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
       ),
     );
   }
@@ -633,5 +668,5 @@ class ProgressAnalyticsScreen extends StatelessWidget {
     );
   }
 
-  String _duration(int minutes) => '${minutes ~/ 60}h ${minutes % 60}m';
+  String _duration(int seconds) => ProgressData.durationLabel(seconds);
 }

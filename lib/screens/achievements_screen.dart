@@ -84,7 +84,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             .map(
               (workout) =>
                   '${workout.id}:${(workout.completedAt ?? workout.startedAt ?? workout.createdAt)?.millisecondsSinceEpoch}:'
-                  '${workout.durationMinutes}:${workout.calories}',
+                  '${workout.durationSeconds}:${workout.calories}',
             )
             .toList()
           ..sort();
@@ -120,7 +120,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         .whereType<AchievementDefinition>()
         .toList();
     if (!mounted || definitions.isEmpty) return;
-    final points = definitions.fold<int>(0, (total, item) => total + item.points);
+    final points = definitions.fold<int>(
+      0,
+      (total, item) => total + item.points,
+    );
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(

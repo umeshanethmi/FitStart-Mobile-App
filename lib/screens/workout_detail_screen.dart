@@ -31,9 +31,9 @@ class WorkoutDetailScreen extends StatelessWidget {
                 child: _metricCard(
                   icon: Icons.calendar_today_outlined,
                   label: 'Date',
-                  value: workout.date.isEmpty
+                  value: workout.displayDate.isEmpty
                       ? 'Date unavailable'
-                      : workout.date,
+                      : workout.displayDate,
                 ),
               ),
               const SizedBox(width: 10),
@@ -42,7 +42,7 @@ class WorkoutDetailScreen extends StatelessWidget {
                   icon: Icons.timer_outlined,
                   label: 'Duration',
                   value: workout.isCompleted
-                      ? '${workout.durationMinutes} min'
+                      ? ProgressData.durationLabel(workout.durationSeconds)
                       : 'Not recorded',
                 ),
               ),

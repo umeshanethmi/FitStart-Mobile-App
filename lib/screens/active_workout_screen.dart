@@ -20,6 +20,12 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   bool _isPaused = false;
 
   @override
+  void initState() {
+    super.initState();
+    widget.session.start();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final exercise = widget.session.plan.exercises[widget.exerciseIndex];
     final completedSets = widget.session.completedSetsFor(widget.exerciseIndex);

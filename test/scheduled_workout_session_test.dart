@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -119,6 +121,9 @@ void main() {
         final other = booking('other', 'Other Routine', [
           {'name': 'Calf raise', 'sets': 4, 'reps': 8, 'restSeconds': 60},
         ]);
+        var savedWorkoutCount = 0;
+        Map<String, dynamic>? savedRecord;
+        final completionGate = Completer<String?>();
         await tester.pumpWidget(
           MaterialApp(
             home: WorkoutPage(
@@ -133,6 +138,11 @@ void main() {
                       onReschedule: () {},
                       onDelete: () {},
                       onReminder: () {},
+                      onWorkoutCompleted: (session) async {
+                        savedWorkoutCount++;
+                        savedRecord = session.toProgressRecord();
+                        return completionGate.future;
+                      },
                     ),
                 ],
               ),
@@ -173,6 +183,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('6 repetitions'), findsOneWidget);
         expect(find.text('SET 1'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
         Future<void> tapStep(String label) async {
           await tester.scrollUntilVisible(
             find.text(label),
@@ -198,7 +209,19 @@ void main() {
         expect(find.text('12 repetitions'), findsOneWidget);
         await tapStep('Finish Exercise');
         expect(find.text('00:00'), findsOneWidget);
-        await tapStep('View Workout Summary');
+        await tester.scrollUntilVisible(
+          find.text('View Workout Summary'),
+          150,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('View Workout Summary'));
+        await tester.pump();
+        expect(find.text('Saving workout...'), findsOneWidget);
+        await tester.tap(find.text('Saving workout...'));
+        await tester.pump();
+        completionGate.complete(null);
+        await tester.pumpAndSettle();
         final summary = tester.widget<WorkoutSummaryScreen>(
           find.byType(WorkoutSummaryScreen),
         );
@@ -206,6 +229,12 @@ void main() {
         expect(summary.session.completedExerciseCount, 2);
         expect(summary.session.plan.name, 'Lunch Strength');
         expect(summary.session.completedAt, isNotNull);
+        expect(summary.progressSaved, isTrue);
+        expect(summary.completionWarning, isNull);
+        expect(savedWorkoutCount, 1);
+        expect(savedRecord?['durationSeconds'], greaterThan(0));
+        expect(savedRecord?['durationMinutes'], greaterThanOrEqualTo(1));
+        expect(savedRecord?['calories'], greaterThan(0));
         expect(tester.takeException(), isNull);
       },
     );
