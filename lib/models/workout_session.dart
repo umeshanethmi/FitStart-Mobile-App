@@ -13,10 +13,12 @@ class WorkoutSession {
   DateTime? _startedAt;
   final Map<int, int> _completedSets = {};
   final Set<int> _completedExercises = {};
+  final Set<int> _skippedExercises = {};
   DateTime? completedAt;
   String? completionRecordId;
 
-  WorkoutSession({required this.plan, this._startedAt, this.onCompleted});
+  WorkoutSession({required this.plan, DateTime? startedAt, this.onCompleted})
+    : _startedAt = startedAt;
 
   DateTime? get startedAt => _startedAt;
 
@@ -33,16 +35,37 @@ class WorkoutSession {
   bool isExerciseComplete(int exerciseIndex) =>
       _completedExercises.contains(exerciseIndex);
 
+  bool isExerciseSkipped(int exerciseIndex) =>
+      _skippedExercises.contains(exerciseIndex);
+
+  int get skippedExerciseCount => _skippedExercises.length;
+
+  int? get nextPendingExerciseIndex {
+    for (var index = 0; index < plan.exercises.length; index++) {
+      if (!isExerciseComplete(index) && !isExerciseSkipped(index)) return index;
+    }
+    return null;
+  }
+
+  void skipExercise(int exerciseIndex) {
+    if (isFinished || isExerciseComplete(exerciseIndex)) return;
+    _skippedExercises.add(exerciseIndex);
+  }
+
   int get completedExerciseCount => _completedExercises.length;
 
   int get completedSetCount =>
       _completedSets.values.fold(0, (total, count) => total + count);
 
-  double get progress => completedExerciseCount / plan.exercises.length;
+  double get progress => plan.exercises.isEmpty
+      ? 0
+      : completedExerciseCount / plan.exercises.length;
 
   void completeSet(int exerciseIndex) {
     if (isFinished) return;
-    if (isExerciseComplete(exerciseIndex)) return;
+    if (isExerciseComplete(exerciseIndex) || isExerciseSkipped(exerciseIndex)) {
+      return;
+    }
 
     final exercise = plan.exercises[exerciseIndex];
     final completedSets = completedSetsFor(exerciseIndex);
