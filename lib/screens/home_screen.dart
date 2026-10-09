@@ -6,226 +6,389 @@ import 'package:fitstart_mobile_app/models/workout_plan.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const Color _blue = Color(0xFF2563EB);
+  static const Color _navy = Color(0xFF0F172A);
+  static const Color _background = Color(0xFFF6F8FD);
 
   @override
   Widget build(BuildContext context) {
     final workout = WorkoutPlan.beginnerSample;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: _background,
       appBar: AppBar(
-        title: const Text('Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
+        title: const Text(
+          'Dashboard',
+          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.3),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: _navy,
+        surfaceTintColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            tooltip: 'Sign out',
+            icon: const Icon(Icons.logout_rounded),
             onPressed: () {
-              // Sign out and navigate back to Welcome Screen
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (context) => const WelcomeScreen()),
                 (route) => false,
               );
             },
-          )
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Welcome to FitStart!',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding = constraints.maxWidth < 400 ? 18.0 : 24.0;
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                26,
+                horizontalPadding,
+                32,
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Ready for your workout today?',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 28),
-              const Text(
-                "Today's Workout",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Card(
-                elevation: 1,
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 760),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              color: _blue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.fitness_center_rounded,
-                              color: _blue,
-                              size: 28,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  workout.name,
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  '${workout.exercises.length} exercises · '
-                                  '${workout.durationMinutes} min · '
-                                  '${workout.difficulty}',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      const Text(
+                        'A fresh start,',
+                        style: TextStyle(
+                          color: _navy,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.7,
+                        ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 5),
+                      Text(
+                        'one workout at a time.',
+                        style: TextStyle(
+                          color: Colors.blueGrey.shade600,
+                          fontSize: 17,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      _TodayWorkoutCard(
+                        workoutName: workout.name,
+                        duration: workout.durationMinutes,
+                        difficulty: workout.difficulty,
+                        exerciseCount: workout.exercises.length,
+                        onStart: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const DailyWorkoutPlanScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 30),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text(
-                            'Your progress',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                          const Expanded(
+                            child: Text(
+                              'Explore movement',
+                              style: TextStyle(
+                                color: _navy,
+                                fontSize: 21,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
                           ),
                           Text(
-                            'Ready to begin',
+                            'Find your rhythm',
                             style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 13,
+                              color: Colors.blueGrey.shade500,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      const LinearProgressIndicator(
-                        value: 0,
-                        minHeight: 7,
-                        borderRadius: BorderRadius.all(Radius.circular(8)),
-                        backgroundColor: Color(0xFFE5E7EB),
-                        color: _blue,
-                      ),
-                      const SizedBox(height: 18),
-                      SizedBox(
-                        height: 52,
-                        child: FilledButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const DailyWorkoutPlanScreen(),
+                      const SizedBox(height: 14),
+                      LayoutBuilder(
+                        builder: (context, gridConstraints) {
+                          final columns = gridConstraints.maxWidth >= 520
+                              ? 4
+                              : 2;
+                          return GridView.count(
+                            crossAxisCount: columns,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            childAspectRatio: columns == 4 ? 1.0 : 1.35,
+                            children: const [
+                              _FeatureCard(
+                                icon: Icons.directions_run_rounded,
+                                title: 'Cardio',
+                                subtitle: 'Get moving',
+                                color: Color(0xFFF97316),
+                                background: Color(0xFFFFF7ED),
                               ),
-                            );
-                          },
-                          icon: const Icon(Icons.play_arrow_rounded),
-                          label: const Text(
-                            'Start Workout',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                              _FeatureCard(
+                                icon: Icons.fitness_center_rounded,
+                                title: 'Strength',
+                                subtitle: 'Build power',
+                                color: Color(0xFF2563EB),
+                                background: Color(0xFFEFF6FF),
+                              ),
+                              _FeatureCard(
+                                icon: Icons.self_improvement_rounded,
+                                title: 'Yoga',
+                                subtitle: 'Find balance',
+                                color: Color(0xFF8B5CF6),
+                                background: Color(0xFFF5F3FF),
+                              ),
+                              _FeatureCard(
+                                icon: Icons.restaurant_rounded,
+                                title: 'Nutrition',
+                                subtitle: 'Fuel well',
+                                color: Color(0xFF16A34A),
+                                background: Color(0xFFF0FDF4),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 28),
-              const Text(
-                'Explore',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 1.2,
-                children: [
-                  _buildFeatureCard(
-                    Icons.directions_run,
-                    'Cardio',
-                    Colors.orange,
-                  ),
-                  _buildFeatureCard(
-                    Icons.fitness_center,
-                    'Strength',
-                    Colors.blue,
-                  ),
-                  _buildFeatureCard(
-                    Icons.self_improvement,
-                    'Yoga',
-                    Colors.purple,
-                  ),
-                  _buildFeatureCard(
-                    Icons.restaurant,
-                    'Diet Plan',
-                    Colors.red,
-                  ),
-                ],
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
+}
 
-  Widget _buildFeatureCard(IconData icon, String title, Color color) {
+class _TodayWorkoutCard extends StatelessWidget {
+  final String workoutName;
+  final int duration;
+  final String difficulty;
+  final int exerciseCount;
+  final VoidCallback onStart;
+
+  const _TodayWorkoutCard({
+    required this.workoutName,
+    required this.duration,
+    required this.difficulty,
+    required this.exerciseCount,
+    required this.onStart,
+  });
+
+  static const Color _blue = Color(0xFF2563EB);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1D4ED8), Color(0xFF2563EB), Color(0xFF3B82F6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: _blue.withOpacity(0.2),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.16),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  "TODAY'S SESSION",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              const Icon(
+                Icons.auto_awesome_rounded,
+                color: Color(0xFFFDE68A),
+                size: 21,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            workoutName,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'A balanced full-body routine to build a strong foundation.',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.86),
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 19),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _SessionPill(
+                icon: Icons.schedule_rounded,
+                label: '$duration min',
+              ),
+              _SessionPill(
+                icon: Icons.fitness_center_rounded,
+                label: '$exerciseCount exercises',
+              ),
+              _SessionPill(
+                icon: Icons.signal_cellular_alt_rounded,
+                label: difficulty,
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: FilledButton.icon(
+              onPressed: onStart,
+              icon: const Icon(Icons.play_arrow_rounded, size: 22),
+              label: const Text(
+                'Start Workout',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: _blue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SessionPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _SessionPill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final Color background;
+
+  const _FeatureCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(16),
+      margin: EdgeInsets.zero,
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(15),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 48, color: color),
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: background,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color),
+            ),
             const SizedBox(height: 12),
             Text(
               title,
               style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
               ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              style: TextStyle(color: Colors.blueGrey.shade500, fontSize: 11),
             ),
           ],
         ),

@@ -5,6 +5,7 @@ class WorkoutSession {
   final DateTime startedAt;
   final Map<int, int> _completedSets = {};
   final Set<int> _completedExercises = {};
+  final Set<int> _skippedExercises = {};
   DateTime? completedAt;
 
   WorkoutSession({
@@ -18,7 +19,12 @@ class WorkoutSession {
   bool isExerciseComplete(int exerciseIndex) =>
       _completedExercises.contains(exerciseIndex);
 
+  bool isExerciseSkipped(int exerciseIndex) =>
+      _skippedExercises.contains(exerciseIndex);
+
   int get completedExerciseCount => _completedExercises.length;
+
+  int get skippedExerciseCount => _skippedExercises.length;
 
   int get completedSetCount =>
       _completedSets.values.fold(0, (total, count) => total + count);
@@ -27,7 +33,9 @@ class WorkoutSession {
       completedExerciseCount / plan.exercises.length;
 
   void completeSet(int exerciseIndex) {
-    if (isExerciseComplete(exerciseIndex)) return;
+    if (isExerciseComplete(exerciseIndex) || isExerciseSkipped(exerciseIndex)) {
+      return;
+    }
 
     final exercise = plan.exercises[exerciseIndex];
     final completedSets = completedSetsFor(exerciseIndex);
@@ -39,6 +47,14 @@ class WorkoutSession {
     if (updatedCount == exercise.sets) {
       _completedExercises.add(exerciseIndex);
     }
+  }
+
+  void skipExercise(int exerciseIndex) {
+    if (isExerciseComplete(exerciseIndex) || isExerciseSkipped(exerciseIndex)) {
+      return;
+    }
+
+    _skippedExercises.add(exerciseIndex);
   }
 
   Duration get elapsed =>
