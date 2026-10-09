@@ -1,11 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitstart_mobile_app/models/progress_data.dart';
+import 'package:fitstart_mobile_app/models/workout_session.dart' as active;
 import 'package:fitstart_mobile_app/services/workout_plan_generator.dart';
 import 'package:fitstart_mobile_app/models/workout_plan.dart';
 import 'package:fitstart_mobile_app/models/scheduled_workout.dart';
 
 class DatabaseService {
+  static const _workoutRecordType = 'completed_workout';
+
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -25,42 +29,100 @@ class DatabaseService {
     final uid = _uid;
     final userPlans = _workoutPlans.where('userId', isEqualTo: uid);
     await for (final snapshot in userPlans.snapshots()) {
-      final records =
-          snapshot.docs.map((document) {
-            final data = document.data();
-            for (final dateField in [
-              'startedAt',
-              'weekStart',
-              'completedAt',
-              'createdAt',
-              'updatedAt',
-            ]) {
-              final dateValue = data[dateField];
-              if (dateValue is Timestamp) {
-                data[dateField] = dateValue.toDate();
-              }
-            }
-            return WorkoutSession.fromMap(document.id, data);
-          }).toList()..sort((first, second) {
-            final firstDate =
-                first.completedAt ??
-                first.startedAt ??
-                first.createdAt ??
-                first.weekStart;
-            final secondDate =
-                second.completedAt ??
-                second.startedAt ??
-                second.createdAt ??
-                second.weekStart;
-            if (firstDate != null && secondDate != null) {
-              final chronology = secondDate.compareTo(firstDate);
-              if (chronology != 0) return chronology;
-            }
-            final dayOrder = second.dayIndex.compareTo(first.dayIndex);
-            return dayOrder != 0 ? dayOrder : first.name.compareTo(second.name);
-          });
-      yield records;
+      yield _workoutsFromSnapshot(snapshot);
     }
+  }
+
+  Future<void> saveCompletedWorkout(active.WorkoutSession session) async {
+    if (session.completedAt == null) {
+      throw StateError('Finish the workout before saving its progress.');
+    }
+
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('You must be signed in to save workout progress.');
+    }
+    final uid = user.uid;
+    session.completionRecordId ??= _workoutPlans.doc().id;
+    final reference = _workoutPlans.doc(session.completionRecordId);
+    final data = {
+      ...session.toProgressRecord(),
+      'userId': uid,
+      'recordType': _workoutRecordType,
+      'createdAt': FieldValue.serverTimestamp(),
+    };
+    if (kDebugMode) {
+      debugPrint(
+        '[WorkoutCompletion] authUid=<redacted>; '
+        'documentPath=${reference.path}; writeOperation=set (upsert; '
+        'Firestore applies create or update rules based on document existence); '
+        'payloadUserIdMatchesAuth=${data['userId'] == uid}',
+      );
+    }
+
+    try {
+      await reference.set(data);
+      if (kDebugMode) {
+        debugPrint(
+          '[WorkoutCompletion] save succeeded; operation=set; '
+          'documentPath=${reference.path}',
+        );
+      }
+    } on FirebaseException catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+          '[WorkoutCompletion] save failed; stage=set (upsert); '
+          'authUid=<redacted>; documentPath=${reference.path}; '
+          'code=${error.code}; message=${error.message ?? '<no message>'}',
+        );
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<WorkoutSession>> getWorkouts() async {
+    final snapshot = await _workoutPlans.where('userId', isEqualTo: _uid).get();
+    return _workoutsFromSnapshot(snapshot);
+  }
+
+  List<WorkoutSession> _workoutsFromSnapshot(
+    QuerySnapshot<Map<String, dynamic>> snapshot,
+  ) {
+    final records =
+        snapshot.docs.map((document) {
+          final data = document.data();
+          for (final dateField in [
+            'startedAt',
+            'weekStart',
+            'completedAt',
+            'createdAt',
+            'updatedAt',
+          ]) {
+            final dateValue = data[dateField];
+            if (dateValue is Timestamp) {
+              data[dateField] = dateValue.toDate();
+            }
+          }
+          return WorkoutSession.fromMap(document.id, data);
+        }).toList()..sort((first, second) {
+          final firstDate =
+              first.completedAt ??
+              first.startedAt ??
+              first.createdAt ??
+              first.weekStart;
+          final secondDate =
+              second.completedAt ??
+              second.startedAt ??
+              second.createdAt ??
+              second.weekStart;
+          if (firstDate != null && secondDate != null) {
+            final chronology = secondDate.compareTo(firstDate);
+            if (chronology != 0) return chronology;
+          }
+          final dayOrder = second.dayIndex.compareTo(first.dayIndex);
+          return dayOrder != 0 ? dayOrder : first.name.compareTo(second.name);
+        });
+    return records;
   }
 
   // 1. Create or Update a User Profile (Called after Registration)
@@ -92,6 +154,10 @@ class DatabaseService {
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
+              .where(
+                (document) =>
+                    document.data()['recordType'] != _workoutRecordType,
+              )
               .map(
                 (document) => WorkoutPlan.fromMap(document.id, document.data()),
               )

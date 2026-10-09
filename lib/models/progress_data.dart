@@ -5,7 +5,6 @@ class ProgressData {
 
   static const int workoutGoal = 5;
   static const int weeklyCalorieGoal = 2250;
-  static const int previousWeekActiveMinutes = 170;
   static const int fallbackWorkoutDurationMinutes = 30;
   static const int estimatedCaloriesPerMinute = 6;
   static const List<String> dayLabels = [
@@ -19,6 +18,32 @@ class ProgressData {
   ];
 
   static DateTime currentWeekStart() => _weekStartFor(DateTime.now());
+
+  static int estimatedCaloriesForSeconds(int seconds) {
+    if (seconds <= 0) return 0;
+    return (seconds * estimatedCaloriesPerMinute / 60).round().clamp(
+      1,
+      1 << 30,
+    );
+  }
+
+  static String durationLabel(int seconds) {
+    if (seconds <= 0) return '0 sec';
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    final remainingSeconds = seconds % 60;
+    if (hours > 0) {
+      return remainingSeconds == 0
+          ? '${hours}h ${minutes}m'
+          : '${hours}h ${minutes}m ${remainingSeconds}s';
+    }
+    if (minutes > 0) {
+      return remainingSeconds == 0
+          ? '$minutes min'
+          : '$minutes min $remainingSeconds sec';
+    }
+    return '$seconds sec';
+  }
 
   static DateTime _weekStartFor(DateTime date) {
     final day = DateTime(date.year, date.month, date.day);
@@ -243,6 +268,7 @@ class WorkoutSession {
     this.weekStart,
     this.completedAt,
     required this.durationMinutes,
+    int? durationSeconds,
     required this.calories,
     required this.iconCodePoint,
     required this.colorValue,
@@ -254,7 +280,7 @@ class WorkoutSession {
     this.createdAt,
     this.updatedAt,
     this.sortOrder = 0,
-  });
+  }) : durationSeconds = durationSeconds ?? durationMinutes * 60;
 
   final String id;
   final String name;
@@ -263,6 +289,7 @@ class WorkoutSession {
   final DateTime? weekStart;
   final DateTime? completedAt;
   final int durationMinutes;
+  final int durationSeconds;
   final int calories;
   final int iconCodePoint;
   final int colorValue;
@@ -279,6 +306,13 @@ class WorkoutSession {
   bool get isStarted => status == WorkoutStatus.inProgress;
   bool get isPlanned => status == WorkoutStatus.planned;
   bool get isCancelled => status == WorkoutStatus.cancelled;
+  String get displayDate {
+    final completion = isCompleted ? completedAt : null;
+    if (completion == null) return date;
+    final month = completion.month.toString().padLeft(2, '0');
+    final day = completion.day.toString().padLeft(2, '0');
+    return '${completion.year}-$month-$day';
+  }
 
   IconData get icon {
     if (iconCodePoint == Icons.directions_run_rounded.codePoint) {
@@ -305,6 +339,7 @@ class WorkoutSession {
     DateTime? weekStart,
     DateTime? completedAt,
     int? durationMinutes,
+    int? durationSeconds,
     int? calories,
     int? iconCodePoint,
     int? colorValue,
@@ -325,6 +360,11 @@ class WorkoutSession {
       weekStart: weekStart ?? this.weekStart,
       completedAt: completedAt ?? this.completedAt,
       durationMinutes: durationMinutes ?? this.durationMinutes,
+      durationSeconds:
+          durationSeconds ??
+          (durationMinutes == null
+              ? this.durationSeconds
+              : durationMinutes * 60),
       calories: calories ?? this.calories,
       iconCodePoint: iconCodePoint ?? this.iconCodePoint,
       colorValue: colorValue ?? this.colorValue,
@@ -346,6 +386,7 @@ class WorkoutSession {
     'weekStart': weekStart,
     'completedAt': completedAt,
     'durationMinutes': durationMinutes,
+    'durationSeconds': durationSeconds,
     'calories': calories,
     'iconCodePoint': iconCodePoint,
     'colorValue': colorValue,
@@ -392,6 +433,14 @@ class WorkoutSession {
       map['dayIndex'],
       fallback: (createdAt?.weekday ?? 1) - 1,
     ).clamp(0, 6).toInt();
+    final durationSeconds = _asInt(
+      map['durationSeconds'],
+      fallback: _asInt(map['durationMinutes']) * 60,
+    ).clamp(0, 1 << 30).toInt();
+    final recordedCalories = _asInt(map['calories']);
+    final calories = recordedCalories > 0 || durationSeconds == 0
+        ? recordedCalories.clamp(0, 1 << 30).toInt()
+        : ProgressData.estimatedCaloriesForSeconds(durationSeconds);
 
     return WorkoutSession(
       id: id,
@@ -405,8 +454,9 @@ class WorkoutSession {
       completedAt:
           _asDateTime(completedAtValue) ??
           (status == WorkoutStatus.completed ? createdAt : null),
-      durationMinutes: _asInt(map['durationMinutes']),
-      calories: _asInt(map['calories']),
+      durationMinutes: _asInt(map['durationMinutes']).clamp(0, 1 << 30).toInt(),
+      durationSeconds: durationSeconds,
+      calories: calories,
       iconCodePoint: _asInt(map['iconCodePoint'], fallback: 0),
       colorValue: _asInt(map['colorValue'], fallback: 0xFF2563EB),
       status: status,
@@ -510,12 +560,21 @@ class WorkoutExercise {
 
 class ProgressMetrics {
   ProgressMetrics(Iterable<WorkoutSession> sessions) {
-    workouts = sessions.toList(growable: false);
+    final uniqueWorkouts = <String, WorkoutSession>{};
+    for (final workout in sessions) {
+      uniqueWorkouts[workout.id] = workout;
+    }
+    workouts = uniqueWorkouts.values.toList(growable: false);
     final weekStart = ProgressData.currentWeekStart();
     bool belongsToCurrentWeek(WorkoutSession workout) {
-      final workoutWeek = workout.weekStart;
-      return workoutWeek == null ||
-          ProgressData._weekStartFor(workoutWeek) == weekStart;
+      final activityDate = workout.isCompleted
+          ? workout.completedAt ??
+                workout.startedAt ??
+                workout.createdAt ??
+                workout.weekStart
+          : workout.weekStart ?? workout.createdAt;
+      return activityDate == null ||
+          ProgressData._weekStartFor(activityDate) == weekStart;
     }
 
     currentWeekWorkouts = workouts.where(belongsToCurrentWeek).toList();
@@ -526,24 +585,38 @@ class ProgressMetrics {
         .where((workout) => belongsToCurrentWeek(workout) && workout.isPlanned)
         .toList();
     completedCount = completed.length;
-    totalDurationMinutes = completed.fold(
+    totalDurationSeconds = completed.fold(
       0,
-      (sum, workout) => sum + workout.durationMinutes,
+      (sum, workout) => sum + workout.durationSeconds,
     );
     totalCalories = completed.fold(0, (sum, workout) => sum + workout.calories);
-    dailyActiveMinutes = List<int>.filled(7, 0);
+    dailyActiveSeconds = List<int>.filled(7, 0);
     dailyCalories = List<int>.filled(7, 0);
     for (final workout in completed) {
-      final day = workout.dayIndex.clamp(0, 6);
-      dailyActiveMinutes[day] += workout.durationMinutes;
+      final completionDate =
+          workout.completedAt ?? workout.startedAt ?? workout.createdAt;
+      final day = ((completionDate?.weekday ?? workout.dayIndex + 1) - 1)
+          .clamp(0, 6)
+          .toInt();
+      dailyActiveSeconds[day] += workout.durationSeconds;
       dailyCalories[day] += workout.calories;
     }
-    historyCompleted = workouts
-        .where((workout) => workout.isCompleted)
+    dailyActiveMinutes = dailyActiveSeconds
+        .map((seconds) => (seconds / 60).ceil())
         .toList(growable: false);
-    historyDurationMinutes = historyCompleted.fold(
+    historyCompleted = workouts.where((workout) => workout.isCompleted).toList()
+      ..sort((first, second) {
+        final firstDate =
+            first.completedAt ?? first.startedAt ?? first.createdAt;
+        final secondDate =
+            second.completedAt ?? second.startedAt ?? second.createdAt;
+        if (firstDate == null) return 1;
+        if (secondDate == null) return -1;
+        return secondDate.compareTo(firstDate);
+      });
+    historyDurationSeconds = historyCompleted.fold(
       0,
-      (sum, workout) => sum + workout.durationMinutes,
+      (sum, workout) => sum + workout.durationSeconds,
     );
     historyCalories = historyCompleted.fold(
       0,
@@ -551,17 +624,36 @@ class ProgressMetrics {
     );
     final previousWeek = weekStart.subtract(const Duration(days: 7));
     final previousWeekRecords = historyCompleted.where((workout) {
-      final workoutWeek = workout.weekStart;
-      return workoutWeek != null &&
-          ProgressData._weekStartFor(workoutWeek) == previousWeek;
+      final completedOn =
+          workout.completedAt ?? workout.startedAt ?? workout.createdAt;
+      return completedOn != null &&
+          ProgressData._weekStartFor(completedOn) == previousWeek;
     });
     hasPreviousWeekData = previousWeekRecords.isNotEmpty;
-    previousWeekActiveMinutes = hasPreviousWeekData
-        ? previousWeekRecords.fold(
-            0,
-            (sum, workout) => sum + workout.durationMinutes,
-          )
-        : ProgressData.previousWeekActiveMinutes;
+    previousWeekActiveSeconds = previousWeekRecords.fold(
+      0,
+      (sum, workout) => sum + workout.durationSeconds,
+    );
+    previousWeekActiveMinutes = previousWeekActiveSeconds ~/ 60;
+    totalDurationMinutes = totalDurationSeconds ~/ 60;
+    historyDurationMinutes = historyDurationSeconds ~/ 60;
+    final now = DateTime.now();
+    final currentMonthWorkouts = historyCompleted.where((workout) {
+      final completedOn =
+          workout.completedAt ?? workout.startedAt ?? workout.createdAt;
+      return completedOn != null &&
+          completedOn.year == now.year &&
+          completedOn.month == now.month;
+    });
+    monthlyCompletedCount = currentMonthWorkouts.length;
+    monthlyDurationSeconds = currentMonthWorkouts.fold(
+      0,
+      (sum, workout) => sum + workout.durationSeconds,
+    );
+    monthlyCalories = currentMonthWorkouts.fold(
+      0,
+      (sum, workout) => sum + workout.calories,
+    );
   }
 
   late final List<WorkoutSession> workouts;
@@ -570,14 +662,21 @@ class ProgressMetrics {
   late final List<WorkoutSession> planned;
   late final List<WorkoutSession> historyCompleted;
   late final int completedCount;
+  late final int totalDurationSeconds;
   late final int totalDurationMinutes;
   late final int totalCalories;
+  late final int historyDurationSeconds;
   late final int historyDurationMinutes;
   late final int historyCalories;
+  late final int previousWeekActiveSeconds;
   late final int previousWeekActiveMinutes;
   late final bool hasPreviousWeekData;
+  late final List<int> dailyActiveSeconds;
   late final List<int> dailyActiveMinutes;
   late final List<int> dailyCalories;
+  late final int monthlyCompletedCount;
+  late final int monthlyDurationSeconds;
+  late final int monthlyCalories;
 
   int get workoutCompletionPercent => ProgressData.workoutGoal == 0
       ? 0
@@ -588,8 +687,9 @@ class ProgressMetrics {
   int get totalWorkoutCount =>
       workouts.where((workout) => !workout.isCancelled).length;
   int get historyCompletedCount => historyCompleted.length;
-  int get averageWorkoutMinutes =>
-      completedCount == 0 ? 0 : (totalDurationMinutes / completedCount).round();
+  int get averageWorkoutMinutes => completedCount == 0
+      ? 0
+      : (totalDurationSeconds / completedCount / 60).round();
   int get calorieGoalPercent => ProgressData.weeklyCalorieGoal == 0
       ? 0
       : (totalCalories * 100 / ProgressData.weeklyCalorieGoal).round();

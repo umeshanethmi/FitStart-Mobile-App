@@ -1,5 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fitstart_mobile_app/models/achievement.dart';
+import 'package:fitstart_mobile_app/models/exercise.dart';
 import 'package:fitstart_mobile_app/models/progress_data.dart';
+import 'package:fitstart_mobile_app/models/training_workout_plan.dart';
+import 'package:fitstart_mobile_app/models/workout_session.dart' as active;
 
 void main() {
   group('ProgressMetrics', () {
@@ -34,6 +38,8 @@ void main() {
       expect(metrics.totalDurationMinutes, 0);
       expect(metrics.totalCalories, 0);
       expect(metrics.dailyActiveMinutes, List<int>.filled(7, 0));
+      expect(metrics.previousWeekActiveMinutes, 0);
+      expect(metrics.hasPreviousWeekData, isFalse);
     });
   });
 
@@ -92,5 +98,157 @@ void main() {
       expect(workout.durationMinutes, 0);
       expect(workout.rating, 0);
     });
+  });
+
+  test('completed active session maps to progress and achievement data', () {
+    final session = active.WorkoutSession(
+      plan: const TrainingWorkoutPlan(
+        name: 'Test strength session',
+        durationMinutes: 30,
+        difficulty: 'Beginner',
+        exercises: [
+          Exercise(
+            name: 'Squat',
+            description: 'Squat',
+            targetArea: 'Legs',
+            sets: 1,
+            reps: 8,
+            restSeconds: 0,
+            beginnerTip: '',
+          ),
+        ],
+      ),
+    );
+    session.start(at: DateTime.now().subtract(const Duration(minutes: 30)));
+    session.completeSet(0);
+    session.finish();
+
+    final record = WorkoutSession.fromMap(
+      'completion-record',
+      session.toProgressRecord(),
+    );
+    final metrics = ProgressMetrics([record]);
+    final achievements = AchievementProgress([record]);
+
+    expect(record.status, WorkoutStatus.completed);
+    expect(record.name, 'Test strength session');
+    expect(record.exerciseSummary.single.isCompleted, isTrue);
+    expect(metrics.completedCount, 1);
+    expect(metrics.totalDurationMinutes, session.elapsed.inMinutes);
+    expect(
+      metrics.totalCalories,
+      session.elapsed.inMinutes * ProgressData.estimatedCaloriesPerMinute,
+    );
+    expect(achievements.completedWorkouts, hasLength(1));
+  });
+
+  test(
+    'active duration starts on exercise start and retains short seconds',
+    () {
+      final start = DateTime(2026, 10, 9, 10);
+      final session = active.WorkoutSession(
+        plan: const TrainingWorkoutPlan(
+          name: 'Short session',
+          durationMinutes: 20,
+          difficulty: 'Beginner',
+          exercises: [
+            Exercise(
+              name: 'March',
+              description: 'March in place',
+              targetArea: 'Legs',
+              sets: 1,
+              reps: 10,
+              restSeconds: 0,
+              beginnerTip: '',
+            ),
+          ],
+        ),
+      );
+
+      expect(session.startedAt, isNull);
+      expect(session.elapsed, Duration.zero);
+      session.start(at: start);
+      session.start(at: start.subtract(const Duration(minutes: 20)));
+      session.completeSet(0);
+      session.finish(at: start.add(const Duration(seconds: 45)));
+
+      final record = session.toProgressRecord();
+      expect(session.startedAt, start);
+      expect(session.elapsed, const Duration(seconds: 45));
+      expect(record['durationSeconds'], 45);
+      expect(record['durationMinutes'], 1);
+      expect(record['calories'], 5);
+      expect(
+        ProgressData.durationLabel(record['durationSeconds'] as int),
+        '45 sec',
+      );
+      expect(ProgressData.estimatedCaloriesForSeconds(0), 0);
+      expect(
+        ProgressData.estimatedCaloriesForSeconds(60),
+        ProgressData.estimatedCaloriesPerMinute,
+      );
+    },
+  );
+
+  test(
+    'analytics and history aggregate unique completions by completion day',
+    () {
+      final now = DateTime.now();
+      final first = WorkoutSession.fromMap('same-id', {
+        'name': 'Short workout',
+        'status': 'completed',
+        'completedAt': now,
+        'startedAt': now.subtract(const Duration(seconds: 45)),
+        'weekStart': now.subtract(Duration(days: now.weekday - 1)),
+        'dayIndex': now.weekday - 1,
+        'durationSeconds': 45,
+        'durationMinutes': 1,
+        'calories': 5,
+        'exercises': [],
+      });
+      final duplicate = first.copyWith(durationSeconds: 45);
+      final metrics = ProgressMetrics([first, duplicate]);
+
+      expect(metrics.completedCount, 1);
+      expect(metrics.historyCompletedCount, 1);
+      expect(metrics.totalDurationSeconds, 45);
+      expect(metrics.dailyActiveSeconds[now.weekday - 1], 45);
+      expect(metrics.dailyActiveMinutes[now.weekday - 1], 1);
+      expect(metrics.totalCalories, 5);
+      expect(metrics.historyDurationSeconds, 45);
+      expect(
+        first.displayDate,
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}',
+      );
+    },
+  );
+
+  test('monthly activity uses completion dates rather than plan dates', () {
+    final now = DateTime.now();
+    final currentMonth = WorkoutSession.fromMap('this-month', {
+      'name': 'Current month workout',
+      'status': 'completed',
+      'completedAt': now,
+      'weekStart': DateTime(now.year, now.month - 1, 1),
+      'durationSeconds': 90,
+      'calories': 0,
+      'exercises': [],
+    });
+    final previousMonthDate = DateTime(now.year, now.month - 1, 15);
+    final previousMonth = WorkoutSession.fromMap('last-month', {
+      'name': 'Previous month workout',
+      'status': 'completed',
+      'completedAt': previousMonthDate,
+      'durationSeconds': 60,
+      'calories': 6,
+      'exercises': [],
+    });
+    final metrics = ProgressMetrics([currentMonth, previousMonth]);
+
+    expect(metrics.monthlyCompletedCount, 1);
+    expect(metrics.monthlyDurationSeconds, 90);
+    expect(metrics.monthlyCalories, 9);
+    expect(currentMonth.calories, 9);
   });
 }

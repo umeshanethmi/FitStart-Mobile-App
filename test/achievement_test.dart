@@ -81,6 +81,32 @@ void main() {
         isEmpty,
       );
     });
+
+    test('uses exact seconds for duration milestone progress', () {
+      final short = _workout(
+        'short',
+        DateTime(2026, 10, 6),
+        duration: 1,
+      ).copyWith(durationSeconds: 59);
+      final oneMinute = _workout(
+        'one-minute',
+        DateTime(2026, 10, 7),
+        duration: 1,
+      ).copyWith(durationSeconds: 60);
+      final shortProgress = AchievementProgress([short]);
+      final minuteProgress = AchievementProgress([oneMinute]);
+
+      expect(shortProgress.completedMinutes, 0);
+      expect(shortProgress.longestWorkoutMinutes, 0);
+      expect(
+        AchievementCatalog.byId('long_haul')!.progressFor(shortProgress),
+        0,
+      );
+      expect(
+        AchievementCatalog.byId('long_haul')!.progressFor(minuteProgress),
+        closeTo(1 / 60, 0.0001),
+      );
+    });
   });
 }
 

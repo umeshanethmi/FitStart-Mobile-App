@@ -5,9 +5,12 @@ import 'package:fitstart_mobile_app/screens/exercise_detail_screen.dart';
 
 class DailyWorkoutPlanScreen extends StatefulWidget {
   final TrainingWorkoutPlan plan;
+  final WorkoutCompletionHandler? onWorkoutCompleted;
+
   const DailyWorkoutPlanScreen({
     super.key,
     this.plan = TrainingWorkoutPlan.beginnerSample,
+    this.onWorkoutCompleted,
   });
 
   @override
@@ -22,7 +25,10 @@ class _DailyWorkoutPlanScreenState extends State<DailyWorkoutPlanScreen> {
   @override
   void initState() {
     super.initState();
-    _session = WorkoutSession(plan: _plan);
+    _session = WorkoutSession(
+      plan: _plan,
+      onCompleted: widget.onWorkoutCompleted,
+    );
   }
 
   void _openExercise(int index) {

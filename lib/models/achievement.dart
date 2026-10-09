@@ -79,7 +79,10 @@ class AchievementProgress {
   AchievementProgress(Iterable<WorkoutSession> workouts)
     : completedWorkouts = _completedWorkouts(workouts),
       completedCalories = _sum(workouts, (workout) => workout.calories),
-      completedMinutes = _sum(workouts, (workout) => workout.durationMinutes),
+      completedMinutes = _sum(
+        workouts,
+        (workout) => workout.durationSeconds ~/ 60,
+      ),
       longestWorkoutMinutes = _longestWorkout(workouts),
       longestStreakDays = _longestStreak(workouts),
       weekendDays = _bestWeekend(workouts);
@@ -112,8 +115,9 @@ class AchievementProgress {
   static int _longestWorkout(Iterable<WorkoutSession> workouts) {
     return _completedWorkouts(workouts).fold(
       0,
-      (longest, workout) =>
-          workout.durationMinutes > longest ? workout.durationMinutes : longest,
+      (longest, workout) => workout.durationSeconds ~/ 60 > longest
+          ? workout.durationSeconds ~/ 60
+          : longest,
     );
   }
 

@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:fitstart_mobile_app/models/progress_data.dart' as progress_data;
 import 'package:fitstart_mobile_app/models/workout_session.dart';
 import 'package:fitstart_mobile_app/screens/main_navigation_screen.dart';
 
 class WorkoutSummaryScreen extends StatelessWidget {
   final WorkoutSession session;
+  final bool progressSaved;
+  final String? completionWarning;
 
-  const WorkoutSummaryScreen({super.key, required this.session});
+  const WorkoutSummaryScreen({
+    super.key,
+    required this.session,
+    this.progressSaved = false,
+    this.completionWarning,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final elapsedMinutes = session.elapsed.inMinutes;
-    final durationLabel = elapsedMinutes == 0
-        ? 'Less than 1 min'
-        : '$elapsedMinutes min';
+    final durationLabel = progress_data.ProgressData.durationLabel(
+      (session.elapsed.inMilliseconds / 1000).ceil(),
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8FD),
@@ -46,6 +53,28 @@ class WorkoutSummaryScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade700, fontSize: 16),
             ),
+            if (progressSaved) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Progress saved to your account.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF15803D),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            if (completionWarning != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                completionWarning!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFFB42318),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
             const SizedBox(height: 28),
             Card(
               color: Colors.white,

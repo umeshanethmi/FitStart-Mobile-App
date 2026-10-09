@@ -95,8 +95,11 @@ class ProgressDetailsScreen extends StatelessWidget {
               _metricCard(
                 icon: Icons.schedule_rounded,
                 label: 'Active time this week',
-                value: _duration(metrics.totalDurationMinutes),
-                progress: (metrics.totalDurationMinutes / 300).clamp(0.0, 1.0),
+                value: _duration(metrics.totalDurationSeconds),
+                progress: (metrics.totalDurationSeconds / 18000).clamp(
+                  0.0,
+                  1.0,
+                ),
               ),
               const SizedBox(height: 18),
               _encouragement(metrics),
@@ -322,7 +325,7 @@ class ProgressDetailsScreen extends StatelessWidget {
     );
   }
 
-  String _duration(int minutes) => '${minutes ~/ 60}h ${minutes % 60}m';
+  String _duration(int seconds) => ProgressData.durationLabel(seconds);
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(

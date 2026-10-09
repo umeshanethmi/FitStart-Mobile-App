@@ -117,6 +117,7 @@ class ExerciseDetailScreen extends StatelessWidget {
                 height: 54,
                 child: FilledButton.icon(
                   onPressed: () {
+                    session.start();
                     Navigator.push(
                       context,
                       MaterialPageRoute(

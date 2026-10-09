@@ -1,12 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fitstart_mobile_app/models/scheduled_workout.dart';
+import 'package:fitstart_mobile_app/models/workout_session.dart';
 import 'package:fitstart_mobile_app/models/workout_plan.dart';
 import 'package:fitstart_mobile_app/screens/ai_workout_plan_screen.dart';
 import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/widgets/delete_workout_plan_dialog.dart';
 import 'package:fitstart_mobile_app/widgets/schedule_workout_dialog.dart';
 import 'package:fitstart_mobile_app/screens/reminders_screen.dart';
+import 'package:fitstart_mobile_app/services/workout_completion_service.dart';
 import 'package:fitstart_mobile_app/widgets/workout_page.dart';
 import 'package:fitstart_mobile_app/models/training_workout_plan.dart';
 import 'package:fitstart_mobile_app/screens/daily_workout_plan_screen.dart';
@@ -179,6 +181,8 @@ class _WorkoutScheduleScreenState extends State<WorkoutScheduleScreen> {
                                 RemindersScreen(scheduleId: workouts[index].id),
                           ),
                         ),
+                        onWorkoutCompleted: (session) =>
+                            WorkoutCompletionService().complete(session),
                       ),
                     ),
                   ),
@@ -197,6 +201,7 @@ class ScheduledWorkoutDetails extends StatelessWidget {
   final VoidCallback onReschedule;
   final VoidCallback onDelete;
   final VoidCallback onReminder;
+  final WorkoutCompletionHandler? onWorkoutCompleted;
 
   const ScheduledWorkoutDetails({
     super.key,
@@ -204,13 +209,19 @@ class ScheduledWorkoutDetails extends StatelessWidget {
     required this.onReschedule,
     required this.onDelete,
     required this.onReminder,
+    this.onWorkoutCompleted,
   });
 
   void _start(BuildContext context) {
     try {
       final plan = TrainingWorkoutPlan.fromScheduledWorkout(workout);
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => DailyWorkoutPlanScreen(plan: plan)),
+        MaterialPageRoute(
+          builder: (_) => DailyWorkoutPlanScreen(
+            plan: plan,
+            onWorkoutCompleted: onWorkoutCompleted,
+          ),
+        ),
       );
     } on FormatException catch (error) {
       ScaffoldMessenger.of(context)

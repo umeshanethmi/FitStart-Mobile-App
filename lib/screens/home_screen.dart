@@ -12,6 +12,7 @@ import 'package:fitstart_mobile_app/screens/workout_schedule_screen.dart';
 import 'package:fitstart_mobile_app/screens/reminders_screen.dart';
 import 'package:fitstart_mobile_app/widgets/workout_page.dart';
 import 'package:fitstart_mobile_app/screens/daily_workout_plan_screen.dart';
+import 'package:fitstart_mobile_app/services/workout_completion_service.dart';
 import 'package:fitstart_mobile_app/models/training_workout_plan.dart';
 import 'package:fitstart_mobile_app/widgets/workout_navigation_scope.dart';
 
@@ -152,7 +153,10 @@ class HomeScreen extends StatelessWidget {
                 '${TrainingWorkoutPlan.beginnerSample.name} | ${TrainingWorkoutPlan.beginnerSample.durationMinutes} min',
                 Icons.play_circle_outline,
                 WorkoutPage.green,
-                const DailyWorkoutPlanScreen(),
+                DailyWorkoutPlanScreen(
+                  onWorkoutCompleted: (session) =>
+                      WorkoutCompletionService().complete(session),
+                ),
               ),
               _destination(
                 context,
