@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
 import 'package:fitstart_mobile_app/screens/register_screen.dart';
+import 'package:fitstart_mobile_app/screens/trainer_dashboard_screen.dart';
+import 'package:fitstart_mobile_app/screens/therapist_dashboard_screen.dart';
 
 class GoogleLogo extends StatelessWidget {
   final double size;
@@ -101,6 +103,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
 
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = true;
   bool _isEmailValid = false;
@@ -190,6 +194,110 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _loginWithGoogle() async {
+    if (_isLoading || _isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isGoogleLoading = true);
+
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (!mounted) return;
+      if (user != null) {
+        await _routeUserBasedOnRole(user.id);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+          return; // User cancelled / closed the popup
+        }
+        String msg = e.message ?? 'Google sign-in failed.';
+        if (e.code == 'account-exists-with-different-credential') {
+          msg = 'An account already exists with a different sign-in method.';
+        }
+        _showLoginError(msg);
+      }
+    } catch (e) {
+      if (mounted) {
+        final err = e.toString();
+        if (err.contains('network') || err.contains('Network')) {
+          _showLoginError('Network error during Google sign-in. Check your connection.');
+        } else if (err.contains('10') || err.contains('12500') || err.contains('developer_error')) {
+          _showLoginError('Google Sign-In configuration required: Please add SHA-1 fingerprint in Firebase Console.');
+        } else {
+          _showLoginError('Google sign-in could not be completed. Please try again.');
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleLoading = false);
+      }
+    }
+  }
+
+  Future<void> _loginWithApple() async {
+    if (_isLoading || _isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isAppleLoading = true);
+
+    try {
+      final user = await _authService.signInWithApple();
+      if (!mounted) return;
+      if (user != null) {
+        await _routeUserBasedOnRole(user.id);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String msg = e.message ?? 'Apple sign-in failed.';
+        if (e.code == 'operation-not-allowed') {
+          msg = 'Apple Sign-In is only enabled for iOS devices unless configured with Apple Developer keys. Please use Google or Email to sign in.';
+        }
+        _showLoginError(msg);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showLoginError('Apple sign-in could not be completed. Please use Google or Email to sign in.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isAppleLoading = false);
+      }
+    }
+  }
+
+  Future<void> _routeUserBasedOnRole(String uid) async {
+    try {
+      final doc = await DatabaseService().getUserProfile(uid);
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        final role = data['role'] as String?;
+        if (role == 'Trainer') {
+          if (mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const TrainerDashboardScreen()),
+              (route) => false,
+            );
+          }
+          return;
+        } else if (role == 'Therapist') {
+          if (mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const TherapistDashboardScreen()),
+              (route) => false,
+            );
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint("Error routing role: $e");
+    }
+
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   void _showLoginError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -202,6 +310,308 @@ class _LoginScreenState extends State<LoginScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 6),
+          content: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.mark_email_read_rounded, color: Colors.white, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF10B981),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+  }
+
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    final formKey = GlobalKey<FormState>();
+    bool isSubmitting = false;
+    String? dialogError;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 14,
+                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24,
+              ),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 4.5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE2E8F0),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.lock_reset_rounded,
+                              color: Color(0xFF2563EB),
+                              size: 26,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Reset Password',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                  letterSpacing: -0.4,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                "We'll send a password recovery link",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Enter the email address registered with your FitStart account. We will verify your account and send a password reset link.',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: Color(0xFF475569),
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: TextFormField(
+                        controller: resetEmailController,
+                        keyboardType: TextInputType.emailAddress,
+                        autofocus: resetEmailController.text.isEmpty,
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'e.g. yourname@gmail.com',
+                          hintStyle: TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontWeight: FontWeight.w400,
+                            fontSize: 15,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.mail_outline_rounded,
+                            color: Color(0xFF2563EB),
+                            size: 20,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          if (!value.contains('@') || !value.contains('.')) {
+                            return 'Please enter a valid email address';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    if (dialogError != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFCA5A5)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(top: 1.5),
+                              child: Icon(Icons.error_outline_rounded, color: Color(0xFFEF4444), size: 17),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                dialogError!,
+                                style: const TextStyle(
+                                  color: Color(0xFFDC2626),
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 22),
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: isSubmitting
+                            ? null
+                            : () async {
+                                if (!formKey.currentState!.validate()) return;
+                                setSheetState(() {
+                                  isSubmitting = true;
+                                  dialogError = null;
+                                });
+
+                                final targetEmail = resetEmailController.text.trim();
+
+                                try {
+                                  await _authService.sendPasswordResetEmail(targetEmail);
+                                  if (!mounted || !bottomSheetContext.mounted) return;
+                                  Navigator.of(bottomSheetContext).pop();
+                                  _showSuccessSnackBar(
+                                    'Password reset link sent to $targetEmail! Check your Inbox and Spam/Junk folder.',
+                                  );
+                                } on FirebaseAuthException catch (e) {
+                                  String msg;
+                                  switch (e.code) {
+                                    case 'user-not-found':
+                                      msg = 'No account found with this email.';
+                                      break;
+                                    case 'invalid-email':
+                                      msg = 'Please enter a valid email address.';
+                                      break;
+                                    case 'network-request-failed':
+                                      msg = 'Network connection error. Check your internet.';
+                                      break;
+                                    case 'too-many-requests':
+                                      msg = 'Too many attempts. Please try again later.';
+                                      break;
+                                    default:
+                                      msg = e.message ?? 'Failed to send reset email.';
+                                  }
+                                  setSheetState(() {
+                                    dialogError = msg;
+                                    isSubmitting = false;
+                                  });
+                                } catch (_) {
+                                  setSheetState(() {
+                                    dialogError = 'Unable to send reset email right now. Please try again.';
+                                    isSubmitting = false;
+                                  });
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: isSubmitting
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : const Text(
+                                'Send Reset Link',
+                                style: TextStyle(
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: isSubmitting
+                          ? null
+                          : () => Navigator.of(bottomSheetContext).pop(),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -362,7 +772,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontSize: 15,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'athlete@pulse.io',
+                        hintText: 'Enter your email address',
                         hintStyle: const TextStyle(
                           color: Color(0xFF94A3B8),
                           fontWeight: FontWeight.w400,
@@ -468,7 +878,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontSize: 15,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'SuperSecret123!',
+                        hintText: 'Enter your password',
                         hintStyle: const TextStyle(
                           color: Color(0xFF94A3B8),
                           fontWeight: FontWeight.w400,
@@ -563,7 +973,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // Forgot Password Link
                       TextButton(
-                        onPressed: () => _showLoginError('Password reset is not available yet.'),
+                        onPressed: _showForgotPasswordDialog,
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
@@ -669,7 +1079,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Apple Button
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => _showLoginError('Apple sign-in is not available yet.'),
+                          onPressed: (_isLoading || _isGoogleLoading || _isAppleLoading) ? null : _loginWithApple,
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF0F172A),
@@ -684,25 +1094,34 @@ class _LoginScreenState extends State<LoginScreen> {
                             elevation: 1,
                             shadowColor: Colors.black.withValues(alpha: 0.04),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(
-                                Icons.apple,
-                                color: Colors.black,
-                                size: 20,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Apple',
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
+                          child: _isAppleLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.black,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(
+                                      Icons.apple,
+                                      color: Colors.black,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Apple',
+                                      style: TextStyle(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
 
@@ -711,7 +1130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Google Button
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => _showLoginError('Google sign-in is not available yet.'),
+                          onPressed: (_isLoading || _isGoogleLoading || _isAppleLoading) ? null : _loginWithGoogle,
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: const Color(0xFF0F172A),
@@ -726,21 +1145,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             elevation: 1,
                             shadowColor: Colors.black.withValues(alpha: 0.04),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              GoogleLogo(size: 17),
-                              SizedBox(width: 8),
-                              Text(
-                                'Google',
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
+                          child: _isGoogleLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF4285F4),
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    GoogleLogo(size: 17),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Google',
+                                      style: TextStyle(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ],

@@ -5,12 +5,17 @@ import 'package:go_router/go_router.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const Color _navy = Color(0xFF0F172A);
-  static const Color _background = Color(0xFFF6F8FD);
-
-  @override
-  Widget build(BuildContext context) {
-    final workout = WorkoutPlan.beginnerSample;
+  void _open(BuildContext context, Widget screen) {
+    final tab = switch (screen) {
+      WorkoutScheduleScreen() => WorkoutTab.schedule,
+      RemindersScreen() => WorkoutTab.reminders,
+      ProgressAnalyticsScreen() => WorkoutTab.progress,
+      ExpertSupportScreen() => WorkoutTab.support,
+      _ => null,
+    };
+    if (tab != null && WorkoutNavigationScope.select(context, tab)) return;
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
 
     return Scaffold(
       backgroundColor: _background,
@@ -154,233 +159,221 @@ class HomeScreen extends StatelessWidget {
             );
           },
         ),
-      ),
-    );
+      );
+    }
   }
-}
-
-class _TodayWorkoutCard extends StatelessWidget {
-  final String workoutName;
-  final int duration;
-  final String difficulty;
-  final int exerciseCount;
-  final VoidCallback onStart;
-
-  const _TodayWorkoutCard({
-    required this.workoutName,
-    required this.duration,
-    required this.difficulty,
-    required this.exerciseCount,
-    required this.onStart,
-  });
-
-  static const Color _blue = Color(0xFF2563EB);
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1D4ED8), Color(0xFF2563EB), Color(0xFF3B82F6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: _blue.withOpacity(0.2),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 11,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.16),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  "TODAY'S SESSION",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              const Icon(
-                Icons.auto_awesome_rounded,
-                color: Color(0xFFFDE68A),
-                size: 21,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            workoutName,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 25,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'A balanced full-body routine to build a strong foundation.',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.86),
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 19),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _SessionPill(
-                icon: Icons.schedule_rounded,
-                label: '$duration min',
-              ),
-              _SessionPill(
-                icon: Icons.fitness_center_rounded,
-                label: '$exerciseCount exercises',
-              ),
-              _SessionPill(
-                icon: Icons.signal_cellular_alt_rounded,
-                label: difficulty,
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: FilledButton.icon(
-              onPressed: onStart,
-              icon: const Icon(Icons.play_arrow_rounded, size: 22),
-              label: const Text(
-                'Start Workout',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: _blue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SessionPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _SessionPill({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.14),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: Colors.white),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeatureCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final Color background;
-
-  const _FeatureCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.background,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      color: Colors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
+  Widget build(BuildContext context) => WorkoutPage(
+    title: 'FitStart',
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      toolbarHeight: 68,
+      leadingWidth: 72,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 20, right: 12),
+        child: Center(
+          child: Tooltip(
+            message: 'FitStart logo',
+            child: Container(
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: background,
-                borderRadius: BorderRadius.circular(14),
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: color),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Color(0xFF0F172A),
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
+              child: const Icon(
+                Icons.bolt_rounded,
+                color: Color(0xFF00E676),
+                size: 28,
+                semanticLabel: 'FitStart logo',
               ),
             ),
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              style: TextStyle(color: Colors.blueGrey.shade500, fontSize: 11),
-            ),
-          ],
+          ),
         ),
       ),
-    );
-  }
+      titleSpacing: 0,
+      title: const FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: 'Fit'),
+              TextSpan(
+                text: 'Start',
+                style: TextStyle(color: WorkoutPage.green),
+              ),
+            ],
+          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+        ),
+      ),
+      shape: const Border(bottom: BorderSide(color: WorkoutPage.line)),
+      actions: [
+        IconButton(
+          tooltip: 'Settings & Privacy',
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () => _open(context, const SettingsPrivacyScreen()),
+        ),
+        IconButton(
+          tooltip: 'Log out',
+          icon: const Icon(Icons.logout_outlined),
+          onPressed: () => _logout(context),
+        ),
+        const SizedBox(width: 8),
+      ],
+    ),
+    body: SafeArea(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+            children: [
+              const Text(
+                'Your training',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'One session at a time.',
+                style: TextStyle(color: WorkoutPage.muted, fontSize: 16),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 156,
+                child: Image.asset(
+                  'assets/images/onboarding_1.jpg',
+                  fit: BoxFit.cover,
+                  alignment: const Alignment(0, -0.62),
+                  semanticLabel: 'Athlete running',
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () => _open(context, const CreateAiPlanScreen()),
+                icon: const Icon(Icons.add),
+                label: const Text('Create Workout Plan'),
+              ),
+              const SizedBox(height: 24),
+              const WorkoutSectionHeading(
+                'Workout hub',
+                icon: Icons.fitness_center_outlined,
+              ),
+              _destination(
+                context,
+                'Start Workout',
+                '${TrainingWorkoutPlan.beginnerSample.name} | ${TrainingWorkoutPlan.beginnerSample.durationMinutes} min',
+                Icons.play_circle_outline,
+                WorkoutPage.green,
+                DailyWorkoutPlanScreen(
+                  onWorkoutCompleted: (session) =>
+                      WorkoutCompletionService().complete(session),
+                ),
+              ),
+              _destination(
+                context,
+                'My Workout Plans',
+                'Your saved routines',
+                Icons.fitness_center_outlined,
+                const Color(0xFF15765A),
+                const AiWorkoutPlanScreen(),
+              ),
+              _destination(
+                context,
+                'Workout Schedule',
+                'Your training calendar',
+                Icons.calendar_month_outlined,
+                const Color(0xFF3264AA),
+                const WorkoutScheduleScreen(),
+              ),
+              _destination(
+                context,
+                'Reminders',
+                'Workout notifications',
+                Icons.notifications_outlined,
+                const Color(0xFFB94E3A),
+                const RemindersScreen(),
+              ),
+              const SizedBox(height: 24),
+              const WorkoutSectionHeading(
+                'Your fitness',
+                icon: Icons.insights_outlined,
+              ),
+              _destination(
+                context,
+                'Progress & Analytics',
+                'Activity and workout history',
+                Icons.insights_outlined,
+                const Color(0xFF3264AA),
+                const ProgressAnalyticsScreen(),
+              ),
+              _destination(
+                context,
+                'Achievements & Trophies',
+                'Your milestones',
+                Icons.emoji_events_outlined,
+                const Color(0xFFAD7517),
+                const AchievementsScreen(),
+              ),
+              _destination(
+                context,
+                'Expert Support',
+                'Stay connected',
+                Icons.support_agent_outlined,
+                const Color(0xFF15765A),
+                const ExpertSupportScreen(),
+              ),
+              _destination(
+                context,
+                'Settings & Privacy',
+                'Account preferences',
+                Icons.tune,
+                WorkoutPage.muted,
+                const SettingsPrivacyScreen(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+
+  Widget _destination(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    Widget screen,
+  ) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: WorkoutPage.line),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Icon(icon, color: color, size: 26),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(color: WorkoutPage.muted, fontSize: 13),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right,
+          size: 20,
+          color: WorkoutPage.muted,
+        ),
+        onTap: () => _open(context, screen),
+      ),
+    ),
+  );
 }

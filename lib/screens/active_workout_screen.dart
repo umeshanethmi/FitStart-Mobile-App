@@ -23,15 +23,63 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
   bool _isSkipping = false;
   bool _isAdvancing = false;
   bool _isEnding = false;
+  bool _savingSummary = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.session.start();
+  }
+
+  Future<void> _showSummary() async {
+    if (_savingSummary) return;
+    setState(() => _savingSummary = true);
+    widget.session.finish();
+    final isComplete =
+        widget.session.completedExerciseCount ==
+        widget.session.plan.exercises.length;
+    final shouldSave = isComplete && widget.session.onCompleted != null;
+    String? warning;
+    try {
+      if (shouldSave) {
+        warning = await widget.session.onCompleted!(widget.session);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isEnding = false;
+        _isSkipping = false;
+        _isAdvancing = false;
+        _savingSummary = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not save your completed workout: $error'),
+        ),
+      );
+      return;
+    }
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WorkoutSummaryScreen(
+          session: widget.session,
+          progressSaved: shouldSave,
+          completionWarning: warning,
+        ),
+      ),
+    );
+  }
 
   void _skipExercise() {
     if (_isSkipping) return;
 
     _isSkipping = true;
     widget.session.skipExercise(widget.exerciseIndex);
-    final nextIndex = widget.exerciseIndex + 1;
+    final nextIndex = widget.session.nextPendingExerciseIndex;
 
-    if (nextIndex < widget.session.plan.exercises.length) {
+    if (nextIndex != null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -44,22 +92,16 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       return;
     }
 
-    widget.session.finish();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WorkoutSummaryScreen(session: widget.session),
-      ),
-    );
+    _showSummary();
   }
 
   void _advanceToNextExercise() {
     if (_isAdvancing) return;
 
     _isAdvancing = true;
-    final nextIndex = widget.exerciseIndex + 1;
+    final nextIndex = widget.session.nextPendingExerciseIndex;
 
-    if (nextIndex < widget.session.plan.exercises.length) {
+    if (nextIndex != null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -72,26 +114,14 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
       return;
     }
 
-    widget.session.finish();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WorkoutSummaryScreen(session: widget.session),
-      ),
-    );
+    _showSummary();
   }
 
   void _endWorkout() {
     if (_isEnding) return;
 
     _isEnding = true;
-    widget.session.finish();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WorkoutSummaryScreen(session: widget.session),
-      ),
-    );
+    _showSummary();
   }
 
   @override
@@ -191,7 +221,7 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                                   boxShadow: [
                                     BoxShadow(
                                       color: const Color(0xFF0F172A)
-                                          .withOpacity(0.035),
+                                          .withValues(alpha: 0.035),
                                       blurRadius: 20,
                                       offset: const Offset(0, 8),
                                     ),
@@ -419,8 +449,11 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                             children: [
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () =>
-                                      setState(() => _isPaused = !_isPaused),
+                                  onPressed: _savingSummary
+                                      ? null
+                                      : () => setState(
+                                          () => _isPaused = !_isPaused,
+                                        ),
                                   icon: Icon(
                                     _isPaused
                                         ? Icons.play_arrow_rounded
@@ -442,7 +475,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: isExerciseComplete
+                                  onPressed: _savingSummary
+                                      ? null
+                                      : isExerciseComplete
                                       ? (_isAdvancing
                                             ? null
                                             : _advanceToNextExercise)
@@ -478,7 +513,10 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                                 child: SizedBox(
                                   height: 54,
                                   child: FilledButton(
-                                    onPressed: _isPaused || isExerciseComplete
+                                    onPressed:
+                                        _isPaused ||
+                                            isExerciseComplete ||
+                                            _savingSummary
                                         ? null
                                         : () {
                                             widget.session.completeSet(
@@ -516,7 +554,9 @@ class _ActiveWorkoutScreenState extends State<ActiveWorkoutScreen> {
                               ),
                               const SizedBox(width: 10),
                               OutlinedButton(
-                                onPressed: _isEnding ? null : _endWorkout,
+                                onPressed: _isEnding || _savingSummary
+                                    ? null
+                                    : _endWorkout,
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFFB91C1C),
                                   side: const BorderSide(

@@ -21,6 +21,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _authService = AuthService();
 
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
   bool _obscurePassword = true;
   bool _agreedToTerms = false;
 
@@ -221,6 +223,76 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  Future<void> _signUpWithGoogle() async {
+    if (_isLoading || _isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isGoogleLoading = true);
+
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (!mounted) return;
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+          return; // User cancelled / closed the popup
+        }
+        _showRegistrationError(e.message ?? 'Google sign-up failed.');
+      }
+    } catch (e) {
+      if (mounted) {
+        final err = e.toString();
+        if (err.contains('network') || err.contains('Network')) {
+          _showRegistrationError('Network error during Google sign-up. Check your connection.');
+        } else if (err.contains('10') || err.contains('12500') || err.contains('developer_error')) {
+          _showRegistrationError('Google Sign-In configuration required: Please add SHA-1 fingerprint in Firebase Console.');
+        } else {
+          _showRegistrationError('Google sign-up could not be completed. Please try again.');
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGoogleLoading = false);
+      }
+    }
+  }
+
+  Future<void> _signUpWithApple() async {
+    if (_isLoading || _isGoogleLoading || _isAppleLoading) return;
+    setState(() => _isAppleLoading = true);
+
+    try {
+      final user = await _authService.signInWithApple();
+      if (!mounted) return;
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        String msg = e.message ?? 'Apple sign-up failed.';
+        if (e.code == 'operation-not-allowed') {
+          msg = 'Apple Sign-In is only enabled for iOS devices unless configured with Apple Developer keys. Please use Google or Email to sign in.';
+        }
+        _showRegistrationError(msg);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showRegistrationError('Apple sign-up could not be completed. Please use Google or Email to sign in.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isAppleLoading = false);
+      }
+    }
+  }
+
   void _showRegistrationError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -240,17 +312,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
-          met ? Icons.check_rounded : Icons.check_rounded,
-          size: 13,
-          color: met ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+          met ? Icons.check_circle_rounded : Icons.circle_outlined,
+          size: 12,
+          color: met ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
         ),
-        const SizedBox(width: 3),
+        const SizedBox(width: 4),
         Text(
           text,
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: met ? FontWeight.w700 : FontWeight.w500,
-            color: met ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+            color: met ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
           ),
         ),
       ],
@@ -273,114 +345,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Top Nav Row: Back Button, Step Pill, Help Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Back Button
-                    GestureDetector(
-                      onTap: () => Navigator.maybePop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFE2E8F0),
-                            width: 1.2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.arrow_back_rounded,
-                            size: 19,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Step Indicator Pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
-                      ),
+                // Top Nav Row: Back Button
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: GestureDetector(
+                    onTap: () => Navigator.maybePop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xFFDBEAFE),
-                          width: 1,
+                          color: const Color(0xFFE2E8F0),
+                          width: 1.2,
                         ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF2563EB),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'STEP 1 OF 3',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF2563EB),
-                              letterSpacing: 0.8,
-                            ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                    ),
-
-                    // Help Button
-                    GestureDetector(
-                      onTap: () {},
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFE2E8F0),
-                            width: 1.2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.help_outline_rounded,
-                            size: 19,
-                            color: Color(0xFF64748B),
-                          ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.arrow_back_rounded,
+                          size: 19,
+                          color: Color(0xFF0F172A),
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 6),
 
                 // Centered App Icon
                 Center(
@@ -460,7 +459,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontSize: 15,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Alex Morgan',
+                      hintText: 'Enter your full name',
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontWeight: FontWeight.w400,
@@ -535,7 +534,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontSize: 15,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'alex@pulse.io',
+                      hintText: 'Enter your email address',
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontWeight: FontWeight.w400,
@@ -627,7 +626,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontSize: 15,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'K1net1cPuls3!',
+                      hintText: 'Enter at least 8 characters',
                       hintStyle: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontWeight: FontWeight.w400,
@@ -841,7 +840,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Apple Button
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => _showRegistrationError('Apple sign-up is not available yet.'),
+                        onPressed: (_isLoading || _isGoogleLoading || _isAppleLoading) ? null : _signUpWithApple,
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF0F172A),
@@ -856,25 +855,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           elevation: 1,
                           shadowColor: Colors.black.withValues(alpha: 0.04),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              Icons.apple,
-                              color: Colors.black,
-                              size: 20,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Apple',
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                        child: _isAppleLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.black,
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(
+                                    Icons.apple,
+                                    color: Colors.black,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Apple',
+                                    style: TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
 
@@ -883,7 +891,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Google Button
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => _showRegistrationError('Google sign-up is not available yet.'),
+                        onPressed: (_isLoading || _isGoogleLoading || _isAppleLoading) ? null : _signUpWithGoogle,
                         style: OutlinedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF0F172A),
@@ -898,21 +906,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           elevation: 1,
                           shadowColor: Colors.black.withValues(alpha: 0.04),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            GoogleLogo(size: 17),
-                            SizedBox(width: 8),
-                            Text(
-                              'Google',
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                        child: _isGoogleLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF4285F4),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  GoogleLogo(size: 17),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Google',
+                                    style: TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],

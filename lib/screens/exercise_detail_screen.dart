@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:fitstart_mobile_app/models/workout_session.dart';
 import 'package:fitstart_mobile_app/screens/active_workout_screen.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class ExerciseDetailScreen extends StatefulWidget {
   final WorkoutSession session;
@@ -59,9 +60,10 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
 
   bool get _supportsYoutubePlayer =>
       kIsWeb ||
-      defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS ||
-      defaultTargetPlatform == TargetPlatform.macOS;
+      (WebViewPlatform.instance != null &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS ||
+              defaultTargetPlatform == TargetPlatform.macOS));
 
   @override
   void dispose() {
@@ -73,6 +75,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   }
 
   void _startExercise() {
+    widget.session.start();
     final controller = _youtubeController;
     if (controller != null) {
       unawaited(controller.pauseVideo());
@@ -270,7 +273,8 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                                       SizedBox(
                                         width: itemWidth,
                                         child: _ExerciseMetric(
-                                          icon: Icons.center_focus_strong_rounded,
+                                          icon:
+                                              Icons.center_focus_strong_rounded,
                                           label: 'TARGET AREA',
                                           value: exercise.targetArea,
                                         ),
@@ -379,10 +383,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                         height: 56,
                         child: FilledButton.icon(
                           onPressed: _startExercise,
-                          icon: const Icon(
-                            Icons.play_arrow_rounded,
-                            size: 23,
-                          ),
+                          icon: const Icon(Icons.play_arrow_rounded, size: 23),
                           label: const Text(
                             'Start Exercise',
                             style: TextStyle(

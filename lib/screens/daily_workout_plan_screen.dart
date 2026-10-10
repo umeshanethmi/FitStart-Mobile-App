@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fitstart_mobile_app/models/workout_plan.dart';
+import 'package:fitstart_mobile_app/models/training_workout_plan.dart';
 import 'package:fitstart_mobile_app/models/workout_session.dart';
 import 'package:fitstart_mobile_app/screens/exercise_detail_screen.dart';
 
@@ -74,6 +74,7 @@ class _DailyWorkoutPlanScreenState extends State<DailyWorkoutPlanScreen> {
                                 duration: _plan.durationMinutes,
                                 difficulty: _plan.difficulty,
                                 exerciseCount: _plan.exercises.length,
+                                durationIsEstimate: _plan.durationIsEstimate,
                               ),
                               const SizedBox(height: 24),
                               Row(
@@ -153,7 +154,9 @@ class _DailyWorkoutPlanScreenState extends State<DailyWorkoutPlanScreen> {
                         width: double.infinity,
                         height: 56,
                         child: FilledButton.icon(
-                          onPressed: () => _openExercise(0),
+                          onPressed: _plan.exercises.isEmpty
+                              ? null
+                              : () => _openExercise(0),
                           icon: const Icon(Icons.play_arrow_rounded, size: 23),
                           label: const Text(
                             'Start Workout',
@@ -187,12 +190,14 @@ class _PlanHero extends StatelessWidget {
   final int duration;
   final String difficulty;
   final int exerciseCount;
+  final bool durationIsEstimate;
 
   const _PlanHero({
     required this.name,
     required this.duration,
     required this.difficulty,
     required this.exerciseCount,
+    required this.durationIsEstimate,
   });
 
   @override
@@ -205,7 +210,7 @@ class _PlanHero extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE7ECF4)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.04),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -257,7 +262,10 @@ class _PlanHero extends StatelessWidget {
             spacing: 9,
             runSpacing: 9,
             children: [
-              _WorkoutTag(icon: Icons.schedule_rounded, label: '$duration min'),
+              _WorkoutTag(
+                icon: Icons.schedule_rounded,
+                label: '${durationIsEstimate ? '~' : ''}$duration min',
+              ),
               _WorkoutTag(
                 icon: Icons.signal_cellular_alt_rounded,
                 label: difficulty,
@@ -271,7 +279,7 @@ class _PlanHero extends StatelessWidget {
           const SizedBox(height: 21),
           Row(
             children: List.generate(
-              exerciseCount * 2 - 1,
+              exerciseCount == 0 ? 0 : exerciseCount * 2 - 1,
               (index) => Expanded(
                 child: Container(
                   height: 5,
@@ -322,12 +330,14 @@ class _WorkoutTag extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: const Color(0xFF2563EB)),
           const SizedBox(width: 7),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF334155),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF334155),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
