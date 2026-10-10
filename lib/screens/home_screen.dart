@@ -1,20 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fitstart_mobile_app/screens/progress_analytics_screen.dart';
-import 'package:fitstart_mobile_app/screens/achievements_screen.dart';
-import 'package:fitstart_mobile_app/screens/expert_support_screen.dart';
-import 'package:fitstart_mobile_app/screens/settings_privacy_screen.dart';
-import 'package:fitstart_mobile_app/services/auth_service.dart';
-import 'package:fitstart_mobile_app/screens/login_screen.dart';
-import 'package:fitstart_mobile_app/screens/create_ai_plan_screen.dart';
-import 'package:fitstart_mobile_app/screens/ai_workout_plan_screen.dart';
-import 'package:fitstart_mobile_app/screens/workout_schedule_screen.dart';
-import 'package:fitstart_mobile_app/screens/reminders_screen.dart';
-import 'package:fitstart_mobile_app/widgets/workout_page.dart';
-import 'package:fitstart_mobile_app/screens/daily_workout_plan_screen.dart';
-import 'package:fitstart_mobile_app/services/workout_completion_service.dart';
-import 'package:fitstart_mobile_app/models/training_workout_plan.dart';
-import 'package:fitstart_mobile_app/widgets/workout_navigation_scope.dart';
+import 'package:fitstart_mobile_app/models/workout_plan.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -31,19 +17,147 @@ class HomeScreen extends StatelessWidget {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }
 
-  Future<void> _logout(BuildContext context) async {
-    try {
-      await AuthService().signOut();
-      if (!context.mounted) return;
-      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (_) => false,
-      );
-    } on FirebaseAuthException catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not log out (${error.code}). Please try again.'),
+    return Scaffold(
+      backgroundColor: _background,
+      appBar: AppBar(
+        title: const Text(
+          'Dashboard',
+          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.3),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: _navy,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Sign out',
+            icon: const Icon(Icons.logout_rounded),
+            onPressed: () => context.go('/'),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding = constraints.maxWidth < 400 ? 18.0 : 24.0;
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                26,
+                horizontalPadding,
+                32,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 760),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'A fresh start,',
+                        style: TextStyle(
+                          color: _navy,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.7,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'one workout at a time.',
+                        style: TextStyle(
+                          color: Colors.blueGrey.shade600,
+                          fontSize: 17,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      _TodayWorkoutCard(
+                        workoutName: workout.name,
+                        duration: workout.durationMinutes,
+                        difficulty: workout.difficulty,
+                        exerciseCount: workout.exercises.length,
+                        onStart: () {
+                          context.push('/workouts/beginner-full-body/plan');
+                        },
+                      ),
+                      const SizedBox(height: 30),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Explore movement',
+                              style: TextStyle(
+                                color: _navy,
+                                fontSize: 21,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'Find your rhythm',
+                            style: TextStyle(
+                              color: Colors.blueGrey.shade500,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      LayoutBuilder(
+                        builder: (context, gridConstraints) {
+                          final columns = gridConstraints.maxWidth >= 520
+                              ? 4
+                              : 2;
+                          return GridView.count(
+                            crossAxisCount: columns,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            childAspectRatio: columns == 4 ? 1.0 : 1.35,
+                            children: const [
+                              _FeatureCard(
+                                icon: Icons.directions_run_rounded,
+                                title: 'Cardio',
+                                subtitle: 'Get moving',
+                                color: Color(0xFFF97316),
+                                background: Color(0xFFFFF7ED),
+                              ),
+                              _FeatureCard(
+                                icon: Icons.fitness_center_rounded,
+                                title: 'Strength',
+                                subtitle: 'Build power',
+                                color: Color(0xFF2563EB),
+                                background: Color(0xFFEFF6FF),
+                              ),
+                              _FeatureCard(
+                                icon: Icons.self_improvement_rounded,
+                                title: 'Yoga',
+                                subtitle: 'Find balance',
+                                color: Color(0xFF8B5CF6),
+                                background: Color(0xFFF5F3FF),
+                              ),
+                              _FeatureCard(
+                                icon: Icons.restaurant_rounded,
+                                title: 'Nutrition',
+                                subtitle: 'Fuel well',
+                                color: Color(0xFF16A34A),
+                                background: Color(0xFFF0FDF4),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       );
     }

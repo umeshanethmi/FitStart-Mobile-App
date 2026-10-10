@@ -4,14 +4,9 @@ import 'package:fitstart_mobile_app/models/workout_session.dart';
 import 'package:fitstart_mobile_app/screens/exercise_detail_screen.dart';
 
 class DailyWorkoutPlanScreen extends StatefulWidget {
-  final TrainingWorkoutPlan plan;
-  final WorkoutCompletionHandler? onWorkoutCompleted;
+  const DailyWorkoutPlanScreen({super.key, this.plan});
 
-  const DailyWorkoutPlanScreen({
-    super.key,
-    this.plan = TrainingWorkoutPlan.beginnerSample,
-    this.onWorkoutCompleted,
-  });
+  final WorkoutPlan? plan;
 
   @override
   State<DailyWorkoutPlanScreen> createState() => _DailyWorkoutPlanScreenState();
@@ -19,16 +14,14 @@ class DailyWorkoutPlanScreen extends StatefulWidget {
 
 class _DailyWorkoutPlanScreenState extends State<DailyWorkoutPlanScreen> {
   static const Color _blue = Color(0xFF2563EB);
-  TrainingWorkoutPlan get _plan => widget.plan;
+  late final WorkoutPlan _plan;
   late final WorkoutSession _session;
 
   @override
   void initState() {
     super.initState();
-    _session = WorkoutSession(
-      plan: _plan,
-      onCompleted: widget.onWorkoutCompleted,
-    );
+    _plan = widget.plan ?? WorkoutPlan.beginnerSample;
+    _session = WorkoutSession(plan: _plan);
   }
 
   void _openExercise(int index) {

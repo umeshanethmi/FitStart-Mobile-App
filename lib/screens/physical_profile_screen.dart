@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fitstart_mobile_app/screens/main_navigation_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
 
@@ -17,8 +17,6 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
   final _weightController = TextEditingController();
   final _ageController = TextEditingController();
 
-  String _selectedGender = 'Male';
-  String _selectedActivity = 'Moderate';
   bool _isLoading = false;
 
   @override
@@ -71,21 +69,13 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
         }
 
         if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-            (route) => false,
-          );
+          context.go('/dashboard');
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error saving profile: $e'),
-              backgroundColor: const Color(0xFFEF4444),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error saving profile: $e')));
         }
       } finally {
         if (mounted) {
@@ -102,40 +92,102 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Top Header Row
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () {
-                        if (Navigator.canPop(context)) {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFE2E8F0),
-                            width: 1.2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Top Section
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 20,
+                    ),
+                    onPressed: () {
+                      if (Navigator.canPop(context)) Navigator.pop(context);
+                    },
+                  ),
+                  Column(
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_rounded,
+                            size: 16,
+                            color: Colors.grey,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
+                          const SizedBox(width: 4),
+                          Text(
+                            'STEP 3 OF 3',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.grey.shade700,
+                              letterSpacing: 1.0,
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Progress Bar
+                      Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 48), // Balance
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Physical Profile',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
                         ),
                         child: const Center(
                           child: Icon(
@@ -145,45 +197,26 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
+                      const SizedBox(height: 48),
 
-                const SizedBox(height: 8),
-
-                // Main Scrollable Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Headline
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const Text(
-                                'Physical Profile',
-                                style: TextStyle(
-                                  fontSize: 27,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A),
-                                  letterSpacing: -0.6,
-                                ),
-                              ),
-                              Container(
-                                width: 6,
-                                height: 6,
-                                margin: const EdgeInsets.only(left: 4, top: 4),
-                                decoration: const BoxDecoration(
-                                  color: brandBlue,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ],
+                      // Height Field
+                      TextFormField(
+                        controller: _heightController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Height (cm)',
+                          labelStyle: TextStyle(color: Colors.grey.shade500),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
                           const SizedBox(height: 8),
                           const Text(
@@ -195,28 +228,45 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                               fontWeight: FontWeight.w400,
                             ),
                           ),
-
-                          const SizedBox(height: 24),
-
-                          // 1. Biological Sex / Gender Selector
-                          const Text(
-                            'BIOLOGICAL SEX',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF475569),
-                              letterSpacing: 0.8,
+                          prefixIcon: Icon(
+                            Icons.height_rounded,
+                            color: Colors.grey.shade400,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF2563EB),
+                              width: 1.5,
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              _buildGenderOption('Male', Icons.male_rounded),
-                              const SizedBox(width: 10),
-                              _buildGenderOption('Female', Icons.female_rounded),
-                              const SizedBox(width: 10),
-                              _buildGenderOption('Other', Icons.person_outline_rounded),
-                            ],
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Required';
+                          if (double.tryParse(value) == null)
+                            return 'Invalid number';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Weight Field
+                      TextFormField(
+                        controller: _weightController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Weight (kg)',
+                          labelStyle: TextStyle(color: Colors.grey.shade500),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
 
                           const SizedBox(height: 22),
@@ -236,39 +286,43 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                               return null;
                             },
                           ),
-
-                          const SizedBox(height: 16),
-
-                          _buildBiometricCard(
-                            label: 'WEIGHT',
-                            controller: _weightController,
-                            icon: Icons.monitor_weight_outlined,
-                            unit: 'kg',
-                            hint: '70.5',
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'Enter your weight';
-                              final val = double.tryParse(v);
-                              if (val == null || val < 20 || val > 300) return 'Enter valid weight (20-300 kg)';
-                              return null;
-                            },
+                          prefixIcon: Icon(
+                            Icons.monitor_weight_rounded,
+                            color: Colors.grey.shade400,
                           ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF2563EB),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Required';
+                          if (double.tryParse(value) == null)
+                            return 'Invalid number';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
 
-                          const SizedBox(height: 16),
-
-                          _buildBiometricCard(
-                            label: 'AGE',
-                            controller: _ageController,
-                            icon: Icons.cake_outlined,
-                            unit: 'years',
-                            hint: '25',
-                            keyboardType: TextInputType.number,
-                            validator: (v) {
-                              if (v == null || v.trim().isEmpty) return 'Enter your age';
-                              final val = int.tryParse(v);
-                              if (val == null || val < 10 || val > 120) return 'Enter valid age (10-120)';
-                              return null;
-                            },
+                      // Age Field
+                      TextFormField(
+                        controller: _ageController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Age',
+                          labelStyle: TextStyle(color: Colors.grey.shade500),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
 
                           const SizedBox(height: 22),
@@ -283,15 +337,16 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                               letterSpacing: 0.8,
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              _buildActivityOption('Sedentary', 'Little exercise'),
-                              const SizedBox(width: 8),
-                              _buildActivityOption('Moderate', '3-4 days/wk'),
-                              const SizedBox(width: 8),
-                              _buildActivityOption('Active', '5+ days/wk'),
-                            ],
+                          prefixIcon: Icon(
+                            Icons.cake_rounded,
+                            color: Colors.grey.shade400,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF2563EB),
+                              width: 1.5,
+                            ),
                           ),
 
                           const SizedBox(height: 24),
@@ -315,6 +370,12 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Required';
+                          if (int.tryParse(value) == null)
+                            return 'Invalid number';
+                          return null;
+                        },
                       ),
                       child: _isLoading
                           ? const SizedBox(
@@ -422,142 +483,52 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
               color: isSelected ? brandBlue : const Color(0xFFE2E8F0),
               width: isSelected ? 1.8 : 1.2,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: isSelected ? brandBlue.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.02),
-                blurRadius: isSelected ? 6 : 3,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? brandBlue : const Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 9.5,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildBiometricCard({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    required String unit,
-    required String hint,
-    required TextInputType keyboardType,
-    required String? Function(String?) validator,
-  }) {
-    const brandBlue = Color(0xFF2563EB);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            // Icon Badge
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Center(
-                child: Icon(
-                  icon,
-                  color: brandBlue,
-                  size: 22,
+            // Bottom Continue Button
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withOpacity(0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            const SizedBox(width: 14),
-
-            // Field Input + Label
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF64748B),
-                      letterSpacing: 0.6,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _completeProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  TextFormField(
-                    controller: controller,
-                    keyboardType: keyboardType,
-                    style: const TextStyle(
-                      color: Color(0xFF0F172A),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 17,
-                    ),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: hint,
-                      hintStyle: const TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontWeight: FontWeight.w400,
-                        fontSize: 16,
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                    ),
-                    validator: validator,
-                  ),
-                ],
-              ),
-            ),
-
-            // Unit Pill
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: Text(
-                unit,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF475569),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Finish Setup',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ],
+                        ),
                 ),
               ),
             ),
