@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:fitstart_mobile_app/models/workout_session.dart';
-import 'package:fitstart_mobile_app/screens/home_screen.dart';
+import 'package:fitstart_mobile_app/screens/main_navigation_screen.dart';
+import 'package:fitstart_mobile_app/models/progress_data.dart' as progress_data;
 
 class WorkoutSummaryScreen extends StatelessWidget {
   final WorkoutSession session;
+  final bool progressSaved;
+  final String? completionWarning;
 
-  const WorkoutSummaryScreen({super.key, required this.session});
+  const WorkoutSummaryScreen({
+    super.key,
+    required this.session,
+    this.progressSaved = false,
+    this.completionWarning,
+  });
 
   static const Color _blue = Color(0xFF2563EB);
 
@@ -18,7 +26,8 @@ class WorkoutSummaryScreen extends StatelessWidget {
         : elapsed.inMinutes > 0
         ? '${elapsed.inMinutes}m ${elapsed.inSeconds.remainder(60)}s'
         : '${elapsed.inSeconds}s';
-    final caloriesBurned = (elapsedSeconds * 5 / 60).round();
+    final caloriesBurned =
+        progress_data.ProgressData.estimatedCaloriesForSeconds(elapsedSeconds);
     final totalExercises = session.plan.exercises.length;
     final completedExercises = session.completedExerciseCount;
     final progress = totalExercises == 0
@@ -41,7 +50,28 @@ class WorkoutSummaryScreen extends StatelessWidget {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     children: [
-                      _CompletionHeader(planName: session.plan.name),
+                      _CompletionHeader(
+                        planName: session.plan.name,
+                        isComplete:
+                            completedExercises == totalExercises &&
+                            totalExercises > 0,
+                      ),
+                      if (progressSaved) ...[
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Progress saved to your account.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Color(0xFF15803D)),
+                        ),
+                      ],
+                      if (completionWarning != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          completionWarning!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Color(0xFFB42318)),
+                        ),
+                      ],
                       const SizedBox(height: 28),
                       Row(
                         children: [
@@ -101,9 +131,12 @@ class WorkoutSummaryScreen extends StatelessWidget {
                     height: 56,
                     child: FilledButton.icon(
                       onPressed: () {
-                        Navigator.of(context).pushAndRemoveUntil(
+                        Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        ).pushAndRemoveUntil(
                           MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
+                            builder: (context) => const MainNavigationScreen(),
                           ),
                           (route) => false,
                         );
@@ -136,8 +169,9 @@ class WorkoutSummaryScreen extends StatelessWidget {
 
 class _CompletionHeader extends StatelessWidget {
   final String planName;
+  final bool isComplete;
 
-  const _CompletionHeader({required this.planName});
+  const _CompletionHeader({required this.planName, required this.isComplete});
 
   @override
   Widget build(BuildContext context) {
@@ -163,9 +197,9 @@ class _CompletionHeader extends StatelessWidget {
             color: const Color(0xFFDCFCE7),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Text(
-            'SESSION COMPLETE',
-            style: TextStyle(
+          child: Text(
+            isComplete ? 'SESSION COMPLETE' : 'SESSION FINISHED',
+            style: const TextStyle(
               color: Color(0xFF15803D),
               fontSize: 11,
               fontWeight: FontWeight.w800,
@@ -174,10 +208,10 @@ class _CompletionHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        const Text(
-          'Workout completed!',
+        Text(
+          isComplete ? 'Workout completed!' : 'Workout finished',
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             color: Color(0xFF0F172A),
             fontSize: 28,
             fontWeight: FontWeight.w800,
@@ -185,7 +219,7 @@ class _CompletionHeader extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'Nice work completing $planName',
+          isComplete ? 'Nice work completing $planName' : planName,
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey.shade700, fontSize: 15),
         ),

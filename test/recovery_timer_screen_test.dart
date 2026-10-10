@@ -1,4 +1,4 @@
-import 'package:fitstart_mobile_app/models/workout_plan.dart';
+import 'package:fitstart_mobile_app/models/training_workout_plan.dart';
 import 'package:fitstart_mobile_app/models/workout_session.dart';
 import 'package:fitstart_mobile_app/screens/recovery_timer_screen.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +8,7 @@ void main() {
   testWidgets(
     'returning to active workout stops recovery and retains session progress',
     (WidgetTester tester) async {
-      final session = WorkoutSession(plan: WorkoutPlan.beginnerSample)
+      final session = WorkoutSession(plan: TrainingWorkoutPlan.beginnerSample)
         ..completeSet(0);
 
       await tester.pumpWidget(

@@ -1,10 +1,11 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fitstart_mobile_app/models/workout_session.dart';
-import 'package:fitstart_mobile_app/screens/active_workout_screen.dart';
 import 'package:fitstart_mobile_app/screens/exercise_detail_screen.dart';
 import 'package:fitstart_mobile_app/screens/workout_summary_screen.dart';
+import 'package:fitstart_mobile_app/screens/active_workout_screen.dart';
 
 class RecoveryTimerScreen extends StatefulWidget {
   final WorkoutSession session;
@@ -23,6 +24,8 @@ class RecoveryTimerScreen extends StatefulWidget {
 class _RecoveryTimerScreenState extends State<RecoveryTimerScreen> {
   late int _remainingSeconds;
   Timer? _timer;
+  DateTime? _timerDeadline;
+  bool _isFinishing = false;
   bool _isNavigatingAway = false;
 
   @override
@@ -44,28 +47,56 @@ class _RecoveryTimerScreenState extends State<RecoveryTimerScreen> {
   void _toggleTimer() {
     if (_timer?.isActive ?? false) {
       _timer?.cancel();
+      final deadline = _timerDeadline;
+      if (deadline != null) {
+        final remaining = deadline.difference(DateTime.now()).inMilliseconds;
+        _remainingSeconds = (remaining / 1000).ceil().clamp(0, 1 << 30);
+      }
+      _timerDeadline = null;
       setState(() {});
       return;
     }
 
     if (_remainingSeconds == 0) return;
 
+    _timerDeadline = DateTime.now().add(Duration(seconds: _remainingSeconds));
     setState(() {});
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds <= 1) {
+      final deadline = _timerDeadline;
+      if (deadline == null) {
         timer.cancel();
-        setState(() => _remainingSeconds = 0);
-      } else {
-        setState(() => _remainingSeconds--);
+        return;
       }
+      final remaining = deadline.difference(DateTime.now()).inMilliseconds;
+      final secondsRemaining = (remaining / 1000).ceil().clamp(0, 1 << 30);
+      if (secondsRemaining == 0) {
+        timer.cancel();
+        _timerDeadline = null;
+      }
+      if (mounted) setState(() => _remainingSeconds = secondsRemaining);
     });
   }
 
   void _continueWorkout() {
+    if (_isFinishing || _isNavigatingAway) return;
     _timer?.cancel();
-    final nextIndex = widget.completedExerciseIndex + 1;
+    _timerDeadline = null;
+    if (!widget.session.isExerciseComplete(widget.completedExerciseIndex) &&
+        !widget.session.isExerciseSkipped(widget.completedExerciseIndex)) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ActiveWorkoutScreen(
+            session: widget.session,
+            exerciseIndex: widget.completedExerciseIndex,
+          ),
+        ),
+      );
+      return;
+    }
+    final nextIndex = _nextExerciseIndex;
 
-    if (nextIndex < widget.session.plan.exercises.length) {
+    if (nextIndex != null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -78,17 +109,63 @@ class _RecoveryTimerScreenState extends State<RecoveryTimerScreen> {
       return;
     }
 
+    _finishWorkout();
+  }
+
+  Future<void> _finishWorkout() async {
+    if (_isFinishing) return;
+    setState(() => _isFinishing = true);
     widget.session.finish();
+    final wasSaved =
+        widget.session.onCompleted != null &&
+        widget.session.completedExerciseCount ==
+            widget.session.plan.exercises.length;
+    String? completionWarning;
+    try {
+      if (wasSaved) {
+        completionWarning = await widget.session.onCompleted!(widget.session);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isFinishing = false);
+      final message = error is FirebaseException
+          ? 'Could not save your completed workout (${error.code}): '
+                '${error.message ?? 'Check your connection and access rules.'}'
+          : 'Could not save your completed workout: $error';
+      _showMessage(message);
+      return;
+    }
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => WorkoutSummaryScreen(session: widget.session),
+        builder: (context) => WorkoutSummaryScreen(
+          session: widget.session,
+          progressSaved: wasSaved,
+          completionWarning: completionWarning,
+        ),
       ),
     );
   }
 
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  int? get _nextExerciseIndex {
+    for (var index = 0; index < widget.session.plan.exercises.length; index++) {
+      if (!widget.session.isExerciseComplete(index) &&
+          !widget.session.isExerciseSkipped(index)) {
+        return index;
+      }
+    }
+    return null;
+  }
+
   void _backToActiveWorkout() {
-    if (_isNavigatingAway) return;
+    if (_isNavigatingAway || _isFinishing) return;
 
     _isNavigatingAway = true;
     _timer?.cancel();
@@ -113,9 +190,10 @@ class _RecoveryTimerScreenState extends State<RecoveryTimerScreen> {
   Widget build(BuildContext context) {
     final exercise =
         widget.session.plan.exercises[widget.completedExerciseIndex];
-    final hasNextExercise =
-        widget.completedExerciseIndex + 1 <
-        widget.session.plan.exercises.length;
+    final hasNextSet =
+        !widget.session.isExerciseComplete(widget.completedExerciseIndex) &&
+        !widget.session.isExerciseSkipped(widget.completedExerciseIndex);
+    final hasNextExercise = _nextExerciseIndex != null;
     final isRunning = _timer?.isActive ?? false;
     final restDuration = exercise.restSeconds;
     final timerProgress = restDuration > 0
@@ -182,7 +260,9 @@ class _RecoveryTimerScreenState extends State<RecoveryTimerScreen> {
                                       width: 56,
                                       height: 56,
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.8),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.8,
+                                        ),
                                         borderRadius: BorderRadius.circular(19),
                                       ),
                                       child: const Icon(
@@ -424,7 +504,9 @@ class _RecoveryTimerScreenState extends State<RecoveryTimerScreen> {
                               width: double.infinity,
                               height: 52,
                               child: FilledButton(
-                                onPressed: _continueWorkout,
+                                onPressed: _isFinishing
+                                    ? null
+                                    : _continueWorkout,
                                 style: FilledButton.styleFrom(
                                   backgroundColor: const Color(0xFF27806D),
                                   shape: RoundedRectangleBorder(
@@ -432,7 +514,11 @@ class _RecoveryTimerScreenState extends State<RecoveryTimerScreen> {
                                   ),
                                 ),
                                 child: Text(
-                                  hasNextExercise
+                                  _isFinishing
+                                      ? 'Saving workout...'
+                                      : hasNextSet
+                                      ? 'Continue to Next Set'
+                                      : hasNextExercise
                                       ? 'Continue to Next Exercise'
                                       : 'View Workout Summary',
                                   style: const TextStyle(
@@ -446,12 +532,16 @@ class _RecoveryTimerScreenState extends State<RecoveryTimerScreen> {
                               width: double.infinity,
                               height: 48,
                               child: TextButton(
-                                onPressed: _continueWorkout,
+                                onPressed: _isFinishing
+                                    ? null
+                                    : _continueWorkout,
                                 style: TextButton.styleFrom(
                                   foregroundColor: const Color(0xFF52736A),
                                 ),
                                 child: Text(
-                                  hasNextExercise
+                                  _isFinishing
+                                      ? 'Saving workout...'
+                                      : hasNextExercise
                                       ? 'Skip Recovery'
                                       : 'Finish Recovery',
                                   style: const TextStyle(
@@ -465,7 +555,7 @@ class _RecoveryTimerScreenState extends State<RecoveryTimerScreen> {
                             width: double.infinity,
                             height: 54,
                             child: FilledButton.icon(
-                              onPressed: _isNavigatingAway
+                              onPressed: _isNavigatingAway || _isFinishing
                                   ? null
                                   : _backToActiveWorkout,
                               icon: const Icon(Icons.arrow_back_rounded),
@@ -509,7 +599,7 @@ class _RecoveryPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.76),
+        color: Colors.white.withValues(alpha: 0.76),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -517,12 +607,14 @@ class _RecoveryPill extends StatelessWidget {
         children: [
           Icon(icon, size: 15, color: const Color(0xFF27806D)),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF35675C),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF35675C),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

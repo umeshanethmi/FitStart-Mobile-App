@@ -19,6 +19,31 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
 
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _heightController.addListener(() => setState(() {}));
+    _weightController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _heightController.dispose();
+    _weightController.dispose();
+    _ageController.dispose();
+    super.dispose();
+  }
+
+  double? get _bmi {
+    final h = double.tryParse(_heightController.text.trim());
+    final w = double.tryParse(_weightController.text.trim());
+    if (h != null && w != null && h > 80 && h < 250 && w > 20 && w < 300) {
+      final meters = h / 100.0;
+      return w / (meters * meters);
+    }
+    return null;
+  }
+
   void _completeProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -30,10 +55,13 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
 
         if (user != null) {
           final profileData = {
-            'height': double.tryParse(_heightController.text) ?? 0.0,
-            'weight': double.tryParse(_weightController.text) ?? 0.0,
-            'age': int.tryParse(_ageController.text) ?? 0,
+            'height': double.tryParse(_heightController.text.trim()) ?? 0.0,
+            'weight': double.tryParse(_weightController.text.trim()) ?? 0.0,
+            'age': int.tryParse(_ageController.text.trim()) ?? 0,
+            'gender': _selectedGender,
+            'activityLevel': _selectedActivity,
             'goal': widget.goal,
+            if (_bmi != null) 'bmi': double.parse(_bmi!.toStringAsFixed(1)),
           };
 
           await dbService.createUserProfile(user.id, profileData);
@@ -58,17 +86,11 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
   }
 
   @override
-  void dispose() {
-    _heightController.dispose();
-    _weightController.dispose();
-    _ageController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    const brandBlue = Color(0xFF2563EB);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FD),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -167,15 +189,12 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF0F172A),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Help us personalize your AI workout plan.',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey.shade600,
-                          height: 1.4,
-                          fontWeight: FontWeight.w500,
+                        child: const Center(
+                          child: Icon(
+                            Icons.arrow_back_rounded,
+                            size: 19,
+                            color: Color(0xFF0F172A),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 48),
@@ -199,9 +218,15 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Enter your biometrics to calibrate your personalized workout routine.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF64748B),
+                              height: 1.45,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
                           prefixIcon: Icon(
                             Icons.height_rounded,
@@ -243,9 +268,23 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade200),
+
+                          const SizedBox(height: 22),
+
+                          // 2. Biometric Input Fields
+                          _buildBiometricCard(
+                            label: 'HEIGHT',
+                            controller: _heightController,
+                            icon: Icons.height_rounded,
+                            unit: 'cm',
+                            hint: '175',
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            validator: (v) {
+                              if (v == null || v.trim().isEmpty) return 'Enter your height';
+                              final val = double.tryParse(v);
+                              if (val == null || val < 50 || val > 260) return 'Enter valid height (50-260 cm)';
+                              return null;
+                            },
                           ),
                           prefixIcon: Icon(
                             Icons.monitor_weight_rounded,
@@ -285,9 +324,18 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade200),
+
+                          const SizedBox(height: 22),
+
+                          // 3. Activity Level Chips
+                          const Text(
+                            'ACTIVITY LEVEL',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF475569),
+                              letterSpacing: 0.8,
+                            ),
                           ),
                           prefixIcon: Icon(
                             Icons.cake_rounded,
@@ -300,6 +348,27 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                               width: 1.5,
                             ),
                           ),
+
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Bottom Finish Setup Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                  child: SizedBox(
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _completeProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: brandBlue,
+                        elevation: 4,
+                        shadowColor: brandBlue.withValues(alpha: 0.35),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) return 'Required';
@@ -308,10 +377,111 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                           return null;
                         },
                       ),
-                    ],
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Text(
+                                  'Finish Setup',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 19,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                    ),
                   ),
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGenderOption(String label, IconData icon) {
+    final isSelected = _selectedGender == label;
+    const brandBlue = Color(0xFF2563EB);
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedGender = label),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? brandBlue : const Color(0xFFE2E8F0),
+              width: isSelected ? 1.8 : 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isSelected ? brandBlue.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.02),
+                blurRadius: isSelected ? 8 : 4,
+                offset: const Offset(0, 2),
               ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: isSelected ? brandBlue : const Color(0xFF64748B),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? brandBlue : const Color(0xFF334155),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityOption(String title, String subtitle) {
+    final isSelected = _selectedActivity == title;
+    const brandBlue = Color(0xFF2563EB);
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedActivity = title),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? brandBlue : const Color(0xFFE2E8F0),
+              width: isSelected ? 1.8 : 1.2,
             ),
 
             // Bottom Continue Button
@@ -336,7 +506,6 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 0,
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
