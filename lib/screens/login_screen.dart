@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
-import 'package:fitstart_mobile_app/services/database_service.dart';
-import 'package:fitstart_mobile_app/screens/main_navigation_screen.dart';
 import 'package:fitstart_mobile_app/screens/register_screen.dart';
 import 'package:fitstart_mobile_app/screens/trainer_dashboard_screen.dart';
 import 'package:fitstart_mobile_app/screens/therapist_dashboard_screen.dart';
@@ -137,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         if (user != null && mounted) {
-          await _routeUserBasedOnRole(user.id);
+          context.go('/dashboard');
         }
       } on FirebaseAuthException catch (e) {
         if (mounted) {
