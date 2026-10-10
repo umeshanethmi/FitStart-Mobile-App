@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fitstart_mobile_app/screens/welcome_screen.dart';
-import 'package:fitstart_mobile_app/screens/daily_workout_plan_screen.dart';
 import 'package:fitstart_mobile_app/models/workout_plan.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -28,12 +27,7 @@ class HomeScreen extends StatelessWidget {
           IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout_rounded),
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-                (route) => false,
-              );
-            },
+            onPressed: () => context.go('/'),
           ),
           const SizedBox(width: 8),
         ],
@@ -79,13 +73,7 @@ class HomeScreen extends StatelessWidget {
                         difficulty: workout.difficulty,
                         exerciseCount: workout.exercises.length,
                         onStart: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const DailyWorkoutPlanScreen(),
-                            ),
-                          );
+                          context.push('/workouts/beginner-full-body/plan');
                         },
                       ),
                       const SizedBox(height: 30),

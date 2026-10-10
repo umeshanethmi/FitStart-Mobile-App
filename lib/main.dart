@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:fitstart_mobile_app/screens/welcome_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fitstart_mobile_app/firebase_options.dart';
+import 'package:fitstart_mobile_app/navigation/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -16,18 +17,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'FitStart',
       debugShowCheckedModeBanner: false,
+      routerConfig: appRouter,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2563EB), // The primary blue color
+          seedColor: const Color(0xFF2563EB),
           primary: const Color(0xFF2563EB),
         ),
         primaryColor: const Color(0xFF2563EB),
         useMaterial3: true,
       ),
-      home: const WelcomeScreen(),
     );
   }
 }

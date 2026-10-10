@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fitstart_mobile_app/screens/home_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
 
@@ -16,18 +16,18 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   final _ageController = TextEditingController();
-  
+
   bool _isLoading = false;
 
   void _completeProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       try {
         final authService = AuthService();
         final dbService = DatabaseService();
         final user = authService.currentUser;
-        
+
         if (user != null) {
           final profileData = {
             'height': double.tryParse(_heightController.text) ?? 0.0,
@@ -35,22 +35,19 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
             'age': int.tryParse(_ageController.text) ?? 0,
             'goal': widget.goal,
           };
-          
+
           await dbService.createUserProfile(user.id, profileData);
           await dbService.generateRuleBasedPlan(user.id, widget.goal);
         }
-        
+
         if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (route) => false,
-          );
+          context.go('/dashboard');
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error saving profile: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error saving profile: $e')));
         }
       } finally {
         if (mounted) {
@@ -78,12 +75,18 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
           children: [
             // Top Section
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 20,
+                    ),
                     onPressed: () {
                       if (Navigator.canPop(context)) Navigator.pop(context);
                     },
@@ -92,7 +95,11 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.location_on_rounded, size: 16, color: Colors.grey),
+                          const Icon(
+                            Icons.location_on_rounded,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'STEP 3 OF 3',
@@ -109,11 +116,32 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                       // Progress Bar
                       Row(
                         children: [
-                          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(2))),
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
                           const SizedBox(width: 4),
-                          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(2))),
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
                           const SizedBox(width: 4),
-                          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(2))),
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563EB),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -123,7 +151,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -151,12 +179,17 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 48),
-                      
+
                       // Height Field
                       TextFormField(
                         controller: _heightController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w500,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Height (cm)',
                           labelStyle: TextStyle(color: Colors.grey.shade500),
@@ -170,25 +203,37 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
-                          prefixIcon: Icon(Icons.height_rounded, color: Colors.grey.shade400),
+                          prefixIcon: Icon(
+                            Icons.height_rounded,
+                            color: Colors.grey.shade400,
+                          ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF2563EB),
+                              width: 1.5,
+                            ),
                           ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) return 'Required';
-                          if (double.tryParse(value) == null) return 'Invalid number';
+                          if (double.tryParse(value) == null)
+                            return 'Invalid number';
                           return null;
                         },
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Weight Field
                       TextFormField(
                         controller: _weightController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w500,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Weight (kg)',
                           labelStyle: TextStyle(color: Colors.grey.shade500),
@@ -202,25 +247,35 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
-                          prefixIcon: Icon(Icons.monitor_weight_rounded, color: Colors.grey.shade400),
+                          prefixIcon: Icon(
+                            Icons.monitor_weight_rounded,
+                            color: Colors.grey.shade400,
+                          ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF2563EB),
+                              width: 1.5,
+                            ),
                           ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) return 'Required';
-                          if (double.tryParse(value) == null) return 'Invalid number';
+                          if (double.tryParse(value) == null)
+                            return 'Invalid number';
                           return null;
                         },
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Age Field
                       TextFormField(
                         controller: _ageController,
                         keyboardType: TextInputType.number,
-                        style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontWeight: FontWeight.w500,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Age',
                           labelStyle: TextStyle(color: Colors.grey.shade500),
@@ -234,15 +289,22 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade200),
                           ),
-                          prefixIcon: Icon(Icons.cake_rounded, color: Colors.grey.shade400),
+                          prefixIcon: Icon(
+                            Icons.cake_rounded,
+                            color: Colors.grey.shade400,
+                          ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF2563EB),
+                              width: 1.5,
+                            ),
                           ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) return 'Required';
-                          if (int.tryParse(value) == null) return 'Invalid number';
+                          if (int.tryParse(value) == null)
+                            return 'Invalid number';
                           return null;
                         },
                       ),
@@ -251,7 +313,7 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                 ),
               ),
             ),
-            
+
             // Bottom Continue Button
             Padding(
               padding: const EdgeInsets.all(24.0),
@@ -264,11 +326,11 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                       color: const Color(0xFF2563EB).withOpacity(0.25),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ],
                 ),
                 child: ElevatedButton(
-                  onPressed: _completeProfile,
+                  onPressed: _isLoading ? null : _completeProfile,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     shape: RoundedRectangleBorder(
@@ -276,26 +338,28 @@ class _PhysicalProfileScreenState extends State<PhysicalProfileScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Finish Setup',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Finish Setup',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ],
                         ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(
-                        Icons.check_circle_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),

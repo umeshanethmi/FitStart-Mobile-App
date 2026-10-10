@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
-import 'package:fitstart_mobile_app/screens/home_screen.dart';
 import 'package:fitstart_mobile_app/screens/register_screen.dart';
 
 class GoogleLogo extends StatelessWidget {
@@ -132,10 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         if (user != null && mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-            (route) => false,
-          );
+          context.go('/dashboard');
         }
       } on FirebaseAuthException catch (e) {
         if (mounted) {
