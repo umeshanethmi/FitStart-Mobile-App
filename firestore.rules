@@ -8,7 +8,7 @@ service cloud.firestore {
     function isAdmin() {
       return signedIn() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin';
     }
 
     function isCoachRole(role) {
@@ -28,20 +28,27 @@ service cloud.firestore {
       return signedIn() &&
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         (
-          isCoachRole(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role) ||
-          isTherapistRole(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role)
+          isCoachRole(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '')) ||
+          isTherapistRole(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', ''))
         ) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isApproved == true;
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isApproved', false) == true;
     }
 
     function isApprovedExpertUid(expertUid, expertRole) {
-      return exists(/databases/$(database)/documents/users/$(expertUid)) &&
-        matchesExpertRole(
-          get(/databases/$(database)/documents/users/$(expertUid)).data.role,
-          expertRole
-        ) &&
-        get(/databases/$(database)/documents/users/$(expertUid)).data.isApproved == true &&
-        expertRole in ['coach', 'therapist'];
+      return expertRole in ['coach', 'therapist'] && (
+        (
+          exists(/databases/$(database)/documents/expert_directory/$(expertUid)) &&
+          get(/databases/$(database)/documents/expert_directory/$(expertUid)).data.get('isApproved', false) == true &&
+          get(/databases/$(database)/documents/expert_directory/$(expertUid)).data.get('role', '') == expertRole
+        ) || (
+          exists(/databases/$(database)/documents/users/$(expertUid)) &&
+          matchesExpertRole(
+            get(/databases/$(database)/documents/users/$(expertUid)).data.get('role', ''),
+            expertRole
+          ) &&
+          get(/databases/$(database)/documents/users/$(expertUid)).data.get('isApproved', false) == true
+        )
+      );
     }
 
     function assignedRequest(userUid, requestId) {
@@ -282,34 +289,22 @@ service cloud.firestore {
     match /support_chats/{chatId} {
       function isParticipant(chatData) {
         return signedIn()
-          && request.auth.uid in chatData.participantIds
+          && chatData != null
+          && chatData.get('participantIds', []).hasAny([request.auth.uid])
           && (
-            request.auth.uid == chatData.userId ||
-            (
-              request.auth.uid == chatData.expertId &&
-              matchesExpertRole(
-                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role,
-                chatData.expertRole
-              ) &&
-              isApprovedExpert()
-            )
+            request.auth.uid == chatData.get('userId', '') ||
+            request.auth.uid == chatData.get('expertId', '')
           );
       }
 
       allow get: if signedIn() && (
+        resource == null ||
         !exists(/databases/$(database)/documents/support_chats/$(chatId)) ||
         isParticipant(resource.data)
       );
       allow list: if signedIn() && (
-        request.auth.uid == resource.data.userId ||
-        (
-          isApprovedExpert() &&
-          resource.data.expertId == request.auth.uid &&
-          matchesExpertRole(
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role,
-            resource.data.expertRole
-          )
-        )
+        resource.data.get('userId', '') == request.auth.uid ||
+        resource.data.get('expertId', '') == request.auth.uid
       );
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly([
@@ -319,7 +314,6 @@ service cloud.firestore {
         ])
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.expertId != request.auth.uid
-        && !isApprovedExpert()
         && request.resource.data.chatId == chatId
         && (
           (
@@ -337,15 +331,6 @@ service cloud.firestore {
           request.resource.data.expertId,
           request.resource.data.expertRole
         )
-        && exists(
-          /databases/$(database)/documents/expert_directory/$(request.resource.data.expertId)
-        )
-        && get(
-          /databases/$(database)/documents/expert_directory/$(request.resource.data.expertId)
-        ).data.isApproved == true
-        && get(
-          /databases/$(database)/documents/expert_directory/$(request.resource.data.expertId)
-        ).data.role == request.resource.data.expertRole
         && request.resource.data.participantIds.size() == 2
         && request.auth.uid in request.resource.data.participantIds
         && request.resource.data.expertId in request.resource.data.participantIds
