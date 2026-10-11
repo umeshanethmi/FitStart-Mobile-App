@@ -5,7 +5,6 @@ import 'package:fitstart_mobile_app/services/database_service.dart';
 import 'package:fitstart_mobile_app/screens/main_navigation_screen.dart';
 import 'package:fitstart_mobile_app/screens/register_screen.dart';
 import 'package:fitstart_mobile_app/screens/expert_dashboard_screen.dart';
-import 'package:fitstart_mobile_app/screens/expert_login_screen.dart';
 
 class GoogleLogo extends StatelessWidget {
   final double size;
@@ -1112,30 +1111,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 14),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const ExpertLoginScreen(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.support_agent_outlined),
-                      label: const Text('Expert Login'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF0F172A),
-                        side: const BorderSide(
-                          color: Color(0xFFE2E8F0),
-                          width: 1.2,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 28),
 
                     // "OR CONTINUE WITH" Divider
