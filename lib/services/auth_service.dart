@@ -10,7 +10,11 @@ class AuthService {
 
   UserModel? _userFromFirebaseUser(User? user, {String name = ""}) {
     return user != null
-        ? UserModel(id: user.uid, name: name.isNotEmpty ? name : user.displayName ?? "User", email: user.email ?? "")
+        ? UserModel(
+            id: user.uid,
+            name: name.isNotEmpty ? name : user.displayName ?? "User",
+            email: user.email ?? "",
+          )
         : null;
   }
 
@@ -19,29 +23,36 @@ class AuthService {
   }
 
   // Register function using Firebase
-  Future<UserModel?> registerWithEmailAndPassword(String name, String email, String password) async {
+  Future<UserModel?> registerWithEmailAndPassword(
+    String name,
+    String email,
+    String password,
+  ) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       User? user = result.user;
-      
+
       // Update the display name
       if (user != null) {
         await user.updateDisplayName(name);
         await user.reload();
       }
-      
+
       return _userFromFirebaseUser(user, name: name);
     } catch (e) {
-      print("Error in registerWithEmailAndPassword: $e");
+      debugPrint("Error in registerWithEmailAndPassword: $e");
       rethrow;
     }
   }
 
   // Login function using Firebase
-  Future<UserModel?> signInWithEmailAndPassword(String email, String password) async {
+  Future<UserModel?> signInWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -50,24 +61,24 @@ class AuthService {
       User? user = result.user;
       return _userFromFirebaseUser(user);
     } catch (e) {
-      print("Error in signInWithEmailAndPassword: $e");
+      debugPrint("Error in signInWithEmailAndPassword: $e");
       rethrow;
     }
   }
 
   // Sign out using Firebase
   Future<void> signOut() async {
-    try {
+    if (!kIsWeb) {
       try {
         final GoogleSignIn googleSignIn = GoogleSignIn();
         if (await googleSignIn.isSignedIn()) {
           await googleSignIn.signOut();
         }
-      } catch (_) {}
-      await _auth.signOut();
-    } catch (e) {
-      debugPrint("Error in signOut: $e");
+      } catch (error) {
+        debugPrint('Could not clear Google sign-in session: $error');
+      }
     }
+    await _auth.signOut();
   }
 
   // Helper to sync social sign-in user profile with Firestore
@@ -100,7 +111,8 @@ class AuthService {
         try {
           userCredential = await _auth.signInWithPopup(googleProvider);
         } on FirebaseAuthException catch (e) {
-          if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+          if (e.code == 'popup-closed-by-user' ||
+              e.code == 'cancelled-popup-request') {
             return null; // User simply closed the popup window
           }
           rethrow;
@@ -112,7 +124,8 @@ class AuthService {
           return null; // User cancelled
         }
 
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
         final AuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
@@ -146,7 +159,8 @@ class AuthService {
             ? await _auth.signInWithPopup(appleProvider)
             : await _auth.signInWithProvider(appleProvider);
       } on FirebaseAuthException catch (e) {
-        if (e.code == 'popup-closed-by-user' || e.code == 'cancelled-popup-request') {
+        if (e.code == 'popup-closed-by-user' ||
+            e.code == 'cancelled-popup-request') {
           return null; // User simply closed the popup window
         }
         rethrow;
@@ -191,7 +205,9 @@ class AuthService {
             .limit(1)
             .get();
         if (queryExact.docs.isNotEmpty) {
-          debugPrint("User email found in Firestore (case-sensitive): $cleanEmail");
+          debugPrint(
+            "User email found in Firestore (case-sensitive): $cleanEmail",
+          );
           return true;
         }
       }
