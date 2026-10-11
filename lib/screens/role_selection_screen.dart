@@ -1,5 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:fitstart_mobile_app/screens/goal_selector_screen.dart';
+import 'package:fitstart_mobile_app/screens/login_screen.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
 import 'package:fitstart_mobile_app/services/database_service.dart';
 
@@ -12,37 +13,108 @@ class RoleSelectionScreen extends StatefulWidget {
 
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   String? _selectedRole;
+  bool _isSaving = false;
 
   void _navigateToNext() async {
     final role = _selectedRole;
-    if (role == null) return;
-    if (role != 'Beginner') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Coach and therapist access is provisioned by an administrator. Use Expert Login after your account is approved.',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
+    if (role == null || _isSaving) return;
+
+    setState(() => _isSaving = true);
 
     try {
       final user = AuthService().currentUser;
       if (user != null) {
-        await DatabaseService().createUserProfile(user.id, {'role': role});
+        if (role == 'Trainer' || role == 'Therapist') {
+          final normalizedRole = role == 'Trainer' ? 'coach' : 'therapist';
+          final displayName = user.name.trim().isNotEmpty
+              ? user.name.trim()
+              : (normalizedRole == 'coach'
+                  ? 'Fitness Coach'
+                  : 'Physical Therapist');
+          final specialization = normalizedRole == 'coach'
+              ? 'Personal Training & Fitness'
+              : 'Physical Therapy & Recovery';
+          final bio = normalizedRole == 'coach'
+              ? 'Certified fitness trainer ready to help you reach your goals.'
+              : 'Certified physical therapist specialized in mobility and recovery.';
+
+          await DatabaseService().createUserProfile(user.id, {
+            'role': normalizedRole,
+            'isApproved': true,
+            'isAvailable': true,
+            'specialization': specialization,
+            'bio': bio,
+            'experience': 3,
+            'name': displayName,
+            'email': user.email,
+          });
+
+          // Also publish directly to expert_directory so members see this coach/therapist
+          await FirebaseFirestore.instance
+              .collection('expert_directory')
+              .doc(user.id)
+              .set({
+            'name': displayName,
+            'role': normalizedRole,
+            'specialization': specialization,
+            'bio': bio,
+            'photoUrl': '',
+            'experience': 3,
+            'isAvailable': true,
+            'isApproved': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } else {
+          await DatabaseService().createUserProfile(user.id, {
+            'role': 'user',
+            'isApproved': false,
+          });
+        }
       }
+
+      // Sign out so user logs into the unified login screen with their credentials
+      await AuthService().signOut();
+
+      if (!mounted) return;
+
+      final roleLabel = role == 'Trainer'
+          ? 'Coach'
+          : role == 'Therapist'
+              ? 'Therapist'
+              : 'Athlete';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$roleLabel registered successfully! Please sign in with your credentials.',
+          ),
+          backgroundColor: const Color(0xFF15803D),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
     } catch (e) {
       debugPrint("Error saving role: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error saving role: $e"),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
-
-    if (!mounted) return;
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const GoalSelectorScreen()),
-    );
   }
 
   @override
@@ -236,40 +308,51 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   child: SizedBox(
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: _selectedRole != null ? _navigateToNext : null,
+                      onPressed: (_selectedRole != null && !_isSaving)
+                          ? _navigateToNext
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: brandBlue,
                         disabledBackgroundColor: const Color(0xFFE2E8F0),
-                        elevation: _selectedRole != null ? 4 : 0,
+                        elevation: (_selectedRole != null && !_isSaving) ? 4 : 0,
                         shadowColor: brandBlue.withValues(alpha: 0.35),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Continue',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: _selectedRole != null
-                                  ? Colors.white
-                                  : const Color(0xFF94A3B8),
-                              letterSpacing: -0.2,
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Continue',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: _selectedRole != null
+                                        ? Colors.white
+                                        : const Color(0xFF94A3B8),
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 19,
+                                  color: _selectedRole != null
+                                      ? Colors.white
+                                      : const Color(0xFF94A3B8),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 19,
-                            color: _selectedRole != null
-                                ? Colors.white
-                                : const Color(0xFF94A3B8),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
                 ),
