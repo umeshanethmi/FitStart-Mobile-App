@@ -43,7 +43,7 @@ class AuthService {
 
       return _userFromFirebaseUser(user, name: name);
     } catch (e) {
-      print("Error in registerWithEmailAndPassword: $e");
+      debugPrint("Error in registerWithEmailAndPassword: $e");
       rethrow;
     }
   }
@@ -61,7 +61,7 @@ class AuthService {
       User? user = result.user;
       return _userFromFirebaseUser(user);
     } catch (e) {
-      print("Error in signInWithEmailAndPassword: $e");
+      debugPrint("Error in signInWithEmailAndPassword: $e");
       rethrow;
     }
   }

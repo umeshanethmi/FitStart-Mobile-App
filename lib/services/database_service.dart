@@ -136,7 +136,7 @@ class DatabaseService {
           .doc(uid)
           .set(profileData, SetOptions(merge: true));
     } catch (e) {
-      print("Error creating user profile: $e");
+      debugPrint("Error creating user profile: $e");
       rethrow;
     }
   }

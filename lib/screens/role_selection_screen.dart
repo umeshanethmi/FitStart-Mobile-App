@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fitstart_mobile_app/screens/goal_selector_screen.dart';
-import 'package:fitstart_mobile_app/screens/trainer_dashboard_screen.dart';
-import 'package:fitstart_mobile_app/screens/therapist_dashboard_screen.dart';
 import 'package:fitstart_mobile_app/services/auth_service.dart';
 import 'package:fitstart_mobile_app/services/database_service.dart';
 
@@ -18,6 +16,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   void _navigateToNext() async {
     final role = _selectedRole;
     if (role == null) return;
+    if (role != 'Beginner') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Coach and therapist access is provisioned by an administrator. Use Expert Login after your account is approved.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     try {
       final user = AuthService().currentUser;
@@ -30,23 +39,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
     if (!mounted) return;
 
-    Widget nextScreen;
-    switch (role) {
-      case 'Trainer':
-        nextScreen = const TrainerDashboardScreen();
-        break;
-      case 'Therapist':
-        nextScreen = const TherapistDashboardScreen();
-        break;
-      case 'Beginner':
-      default:
-        nextScreen = const GoalSelectorScreen();
-        break;
-    }
-
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => nextScreen),
+      MaterialPageRoute(builder: (context) => const GoalSelectorScreen()),
     );
   }
 
@@ -65,7 +60,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               children: [
                 // Top Header Row
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 12.0,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -231,7 +229,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
                 // Bottom Action Button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 16.0,
+                  ),
                   child: SizedBox(
                     height: 54,
                     child: ElevatedButton(
@@ -253,7 +254,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: _selectedRole != null ? Colors.white : const Color(0xFF94A3B8),
+                              color: _selectedRole != null
+                                  ? Colors.white
+                                  : const Color(0xFF94A3B8),
                               letterSpacing: -0.2,
                             ),
                           ),
@@ -261,7 +264,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                           Icon(
                             Icons.arrow_forward_rounded,
                             size: 19,
-                            color: _selectedRole != null ? Colors.white : const Color(0xFF94A3B8),
+                            color: _selectedRole != null
+                                ? Colors.white
+                                : const Color(0xFF94A3B8),
                           ),
                         ],
                       ),
@@ -338,7 +343,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 children: [
                   // Subtle Tag Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2.5,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(5),
@@ -361,7 +369,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF1E293B),
+                      color: isSelected
+                          ? const Color(0xFF0F172A)
+                          : const Color(0xFF1E293B),
                       letterSpacing: -0.2,
                     ),
                   ),

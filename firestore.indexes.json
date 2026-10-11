@@ -1,0 +1,38 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "expert_directory",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "role", "order": "ASCENDING"},
+        {"fieldPath": "isApproved", "order": "ASCENDING"},
+        {"fieldPath": "name", "order": "ASCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "support_chats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "userId", "order": "ASCENDING"},
+        {"fieldPath": "lastMessageAt", "order": "DESCENDING"}
+      ]
+    },
+    {
+      "collectionGroup": "support_chats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "expertId", "order": "ASCENDING"},
+        {"fieldPath": "expertRole", "order": "ASCENDING"}
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "support_requests",
+      "fieldPath": "expertId",
+      "indexes": [
+        {"order": "ASCENDING", "queryScope": "COLLECTION_GROUP"}
+      ]
+    }
+  ]
+}
