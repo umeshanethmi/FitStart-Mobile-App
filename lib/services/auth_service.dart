@@ -208,5 +208,5 @@ class AuthService {
     debugPrint("Sending password reset email to: $cleanEmail");
     await _auth.sendPasswordResetEmail(email: cleanEmail);
     debugPrint("Password reset email sent to: $cleanEmail");
-  }
+2  }
 }
